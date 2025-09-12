@@ -1,7 +1,9 @@
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardBody } from '@heroui/card';
+import { Button } from '@heroui/button';
+import { XMarkIcon as XIcon } from '@heroicons/react/24/solid';
 
 interface Student {
   id: number;
@@ -11,54 +13,38 @@ interface Student {
 interface SlotMachineProps {
   students: Student[];
   winner: Student;
+  isSpinning: boolean;
   animationDelay: number;
-  probabilities: number[];
+  onRemove: () => void;
 }
 
 const REEL_ITEM_WIDTH = 150; // w-36
 
-export const SlotMachine = ({ students, winner, animationDelay, probabilities }: SlotMachineProps) => {
-  const [isSpinning, setIsSpinning] = useState(true);
+export const SlotMachine = ({ students, winner, isSpinning, animationDelay, onRemove }: SlotMachineProps) => {
   const [visibleItems, setVisibleItems] = useState(3);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const reel = useMemo(() => {
-    const weightedList: Student[] = [];
-    students.forEach((student, index) => {
-      const weight = Math.round(probabilities[index] * 100);
-      for (let i = 0; i < weight; i++) {
-        weightedList.push(student);
-      }
-    });
+    let reelItems: Student[] = [];
+    const numRepeats = 20; // Increased repeats for a longer spin
 
-    // Shuffle the weighted list
-    for (let i = weightedList.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [weightedList[i], weightedList[j]] = [weightedList[j], weightedList[i]];
+    for (let i = 0; i < numRepeats; i++) {
+      const shuffled = [...students].sort(() => Math.random() - 0.5);
+      reelItems = reelItems.concat(shuffled);
     }
 
-    // Ensure the winner is in the list, and place it at a random position
-    const winnerIndexInWeightedList = weightedList.findIndex(s => s.id === winner.id);
-    if (winnerIndexInWeightedList === -1) {
-        weightedList.splice(Math.floor(Math.random() * weightedList.length), 0, winner);
-    } else {
-        // Move winner to a different random location to make it less predictable
-        const temp = weightedList[winnerIndexInWeightedList];
-        weightedList.splice(winnerIndexInWeightedList, 1);
-        weightedList.splice(Math.floor(Math.random() * weightedList.length), 0, temp);
+    if (winner) {
+      const winnerIndex = Math.floor(reelItems.length * 0.9);
+      reelItems.splice(winnerIndex, 1, winner);
     }
 
-    return weightedList;
-  }, [students, probabilities, winner]);
+    return reelItems;
+  }, [students, winner]);
 
-  const winnerIndex = useMemo(() => reel.findIndex((s) => s.id === winner.id), [reel, winner]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsSpinning(false);
-    }, animationDelay);
-    return () => clearTimeout(timer);
-  }, [animationDelay]);
+  const winnerIndex = useMemo(() => {
+    if (!winner) return -1;
+    return reel.lastIndexOf(winner);
+  }, [reel, winner]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -82,8 +68,26 @@ export const SlotMachine = ({ students, winner, animationDelay, probabilities }:
   const containerWidth = REEL_ITEM_WIDTH * visibleItems;
   const offset = (containerWidth - REEL_ITEM_WIDTH) / 2;
 
+  const [spring, setSpring] = useState({ damping: 50, stiffness: 100, mass: 1 });
+
+  useEffect(() => {
+    setSpring({
+      damping: 50 + Math.random() * 30,
+      stiffness: 100 + Math.random() * 50,
+      mass: 1 + Math.random(),
+    });
+  }, [isSpinning]);
+
   return (
-    <Card className="w-full">
+    <Card className="w-full group">
+        <Button 
+            className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity" 
+            variant="light" 
+            size="sm"
+            onPress={onRemove}
+        >
+            <XIcon className="w-4 h-4"/>
+        </Button>
       <CardBody ref={containerRef} className="flex justify-center items-center">
         <div
           className="relative text-center text-2xl font-bold overflow-hidden mx-auto"
@@ -93,14 +97,14 @@ export const SlotMachine = ({ students, winner, animationDelay, probabilities }:
           <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-background to-transparent z-20" />
           <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-background to-transparent z-20" />
           <motion.div
+            initial={{ x: 0 }}
             animate={{
-              x: isSpinning
-                ? - (reel.length * REEL_ITEM_WIDTH)
-                : - (winnerIndex * REEL_ITEM_WIDTH - offset),
+              x: isSpinning && winnerIndex !== -1 ? -(winnerIndex * REEL_ITEM_WIDTH - offset) : 0,
             }}
             transition={{
-              duration: isSpinning ? 5 : 2,
-              ease: isSpinning ? 'linear' : 'easeOut',
+              type: 'spring',
+              ...spring,
+              delay: isSpinning ? animationDelay / 1000 : 0,
             }}
             className="flex flex-row"
           >

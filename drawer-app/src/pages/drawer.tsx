@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Input } from "@heroui/input";
 import { Progress } from "@heroui/progress";
+import { AnimatePresence, motion } from "framer-motion";
+import { PlusIcon } from "@heroicons/react/24/solid";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -49,9 +50,9 @@ function computeWeights(
 // === Component ===
 export default function DrawerPage() {
   const [students, setStudents] = useState<Student[]>(initialStudents);
-  const [drawCount, setDrawCount] = useState<number>(2);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [drawnStudents, setDrawnStudents] = useState<Student[]>([]);
+  const [drawnStudents, setDrawnStudents] = useState<Student[]>([null]);
+  const [isDrawing, setIsDrawing] = useState(false);
 
   const probs = useMemo(
     () =>
@@ -72,12 +73,21 @@ export default function DrawerPage() {
       .sort((a, b) => b.prob - a.prob);
   }, [students, probs]);
 
+  useEffect(() => {
+    if (isDrawing) {
+      const totalAnimationTime = 8000 + (drawnStudents.length - 1) * 1000;
+      const timer = setTimeout(() => setIsDrawing(false), totalAnimationTime);
+      return () => clearTimeout(timer);
+    }
+  }, [isDrawing, drawnStudents.length]);
+
   function handleDraw() {
+    setIsDrawing(true);
     const picked: Student[] = [];
     const available = [...students];
     const weights = [...probs];
 
-    for (let i = 0; i < drawCount && available.length > 0; i++) {
+    for (let i = 0; i < drawnStudents.length && available.length > 0; i++) {
       const r = Math.random();
       let cum = 0;
       let idx = 0;
@@ -109,6 +119,14 @@ export default function DrawerPage() {
     setDrawnStudents(picked);
   }
 
+  const addSlotMachine = () => {
+    setDrawnStudents((prev) => [...prev, null]);
+  };
+
+  const removeSlotMachine = (index: number) => {
+    setDrawnStudents((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <DefaultLayout>
       <section className="py-2">
@@ -116,41 +134,43 @@ export default function DrawerPage() {
           <h1 className={title()}>Tirage au sort</h1>
         </div>
 
-        {drawnStudents.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <h2 className="text-xl font-semibold">Étudiants tirés au sort</h2>
-            </CardHeader>
-            <CardBody className="flex flex-col gap-4">
-              {drawnStudents.map((student, index) => (
-                <SlotMachine
-                  key={student.id}
-                  students={students}
-                  winner={student}
-                  animationDelay={index * 1000} // 1 second delay between each machine
-                  probabilities={probs}
-                />
-              ))}
-            </CardBody>
-          </Card>
-        )}
-
         <Card className="mb-6">
           <CardHeader className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Sélectionner les étudiants</h2>
-            <Button color="primary" onPress={handleDraw}>
-              Tirer {drawCount} étudiant(s)
+            <h2 className="text-xl font-semibold">Tirage</h2>
+            <Button color="primary" onPress={handleDraw} disabled={isDrawing}>
+              Lancer le tirage
             </Button>
           </CardHeader>
-          <CardBody className="flex items-center gap-4">
-            <Input
-              type="number"
-              label="Nombre d'étudiants"
-              min={1}
-              max={students.length}
-              value={drawCount.toString()}
-              onChange={(e) => setDrawCount(Number(e.target.value))}
-            />
+          <CardBody className="flex flex-col gap-4">
+            <AnimatePresence>
+              {drawnStudents.map((student, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <SlotMachine
+                    students={students}
+                    winner={student}
+                    isSpinning={isDrawing}
+                    animationDelay={index * 1000}
+                    onRemove={() => removeSlotMachine(index)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {!isDrawing && (
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                onPress={addSlotMachine}
+              >
+                <PlusIcon className="w-4 h-4 mr-2" />
+                Ajouter un étudiant
+              </Button>
+            )}
           </CardBody>
         </Card>
 
