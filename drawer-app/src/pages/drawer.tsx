@@ -121,13 +121,13 @@ export default function DrawerPage() {
             <CardHeader>
               <h2 className="text-xl font-semibold">Étudiants tirés au sort</h2>
             </CardHeader>
-            <CardBody className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CardBody className="flex flex-col gap-4">
               {drawnStudents.map((student, index) => (
                 <SlotMachine
                   key={student.id}
                   students={students}
                   winner={student}
-                  animationDelay={index * 2000}
+                  animationDelay={index * 1000} // 1 second delay between each machine
                   probabilities={probs}
                 />
               ))}
