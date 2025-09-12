@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardBody } from '@heroui/card';
@@ -15,7 +16,6 @@ interface SlotMachineProps {
 }
 
 const REEL_ITEM_WIDTH = 150; // w-36
-const VISIBLE_ITEMS = 3;
 
 export const SlotMachine = ({ students, winner, animationDelay, probabilities }: SlotMachineProps) => {
   const [isSpinning, setIsSpinning] = useState(true);
@@ -58,24 +58,22 @@ export const SlotMachine = ({ students, winner, animationDelay, probabilities }:
     return () => clearTimeout(timer);
   }, [animationDelay]);
 
-  const containerWidth = REEL_ITEM_WIDTH * VISIBLE_ITEMS;
-  const offset = (containerWidth - REEL_ITEM_WIDTH) / 2;
-
   return (
-    <Card className="w-full">
+    <Card className="w-full flex justify-center items-center">
       <CardBody>
         <div
           className="relative text-center text-2xl font-bold overflow-hidden"
-          style={{ width: containerWidth }}
+          style={{ width: REEL_ITEM_WIDTH }}
         >
+          <div className="absolute top-0 left-0 w-full h-full border-2 border-primary rounded-lg z-10" />
           <motion.div
             animate={{
               x: isSpinning
-                ? - (reel.length * REEL_ITEM_WIDTH) // A large number to ensure it spins for a while
-                : - (winnerIndex * REEL_ITEM_WIDTH - offset),
+                ? - (reel.length * REEL_ITEM_WIDTH)
+                : - (winnerIndex * REEL_ITEM_WIDTH),
             }}
             transition={{
-              duration: isSpinning ? 5 : 2, // Adjust duration for spinning and stopping
+              duration: isSpinning ? 5 : 2,
               ease: isSpinning ? 'linear' : 'easeOut',
             }}
             className="flex flex-row"
