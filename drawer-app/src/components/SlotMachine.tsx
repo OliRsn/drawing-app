@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardBody } from '@heroui/card';
@@ -15,7 +14,7 @@ interface SlotMachineProps {
   probabilities: number[];
 }
 
-const REEL_ITEM_HEIGHT = 40; // h-10
+const REEL_ITEM_WIDTH = 150; // w-36
 const VISIBLE_ITEMS = 3;
 
 export const SlotMachine = ({ students, winner, animationDelay, probabilities }: SlotMachineProps) => {
@@ -59,30 +58,30 @@ export const SlotMachine = ({ students, winner, animationDelay, probabilities }:
     return () => clearTimeout(timer);
   }, [animationDelay]);
 
-  const containerHeight = REEL_ITEM_HEIGHT * VISIBLE_ITEMS;
-  const offset = (containerHeight - REEL_ITEM_HEIGHT) / 2;
+  const containerWidth = REEL_ITEM_WIDTH * VISIBLE_ITEMS;
+  const offset = (containerWidth - REEL_ITEM_WIDTH) / 2;
 
   return (
     <Card className="w-full">
       <CardBody>
         <div
           className="relative text-center text-2xl font-bold overflow-hidden"
-          style={{ height: containerHeight }}
+          style={{ width: containerWidth }}
         >
           <motion.div
             animate={{
-              y: isSpinning
-                ? - (reel.length * REEL_ITEM_HEIGHT) // A large number to ensure it spins for a while
-                : - (winnerIndex * REEL_ITEM_HEIGHT - offset),
+              x: isSpinning
+                ? - (reel.length * REEL_ITEM_WIDTH) // A large number to ensure it spins for a while
+                : - (winnerIndex * REEL_ITEM_WIDTH - offset),
             }}
             transition={{
               duration: isSpinning ? 5 : 2, // Adjust duration for spinning and stopping
               ease: isSpinning ? 'linear' : 'easeOut',
             }}
-            className="flex flex-col"
+            className="flex flex-row"
           >
             {reel.map((student, index) => (
-              <div key={`${student.id}-${index}`} className="flex items-center justify-center" style={{ height: REEL_ITEM_HEIGHT }}>
+              <div key={`${student.id}-${index}`} className="flex items-center justify-center" style={{ width: REEL_ITEM_WIDTH, flexShrink: 0 }}>
                 {student.name}
               </div>
             ))}
