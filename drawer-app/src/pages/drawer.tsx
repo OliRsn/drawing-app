@@ -3,9 +3,11 @@ import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Progress } from "@heroui/progress";
+import Confetti from "react-confetti";
 
-import { title, subtitle } from "@/components/primitives";
+import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
+import { DrawnStudentCard } from "@/components/DrawnStudentCard";
 
 // === Types ===
 interface Student {
@@ -50,6 +52,8 @@ export default function DrawerPage() {
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [drawCount, setDrawCount] = useState<number>(2);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [drawnStudents, setDrawnStudents] = useState<Student[]>([]);
 
   const probs = useMemo(
     () =>
@@ -71,53 +75,80 @@ export default function DrawerPage() {
   }, [students, probs]);
 
   function handleDraw() {
-    const picked: Student[] = [];
-    const available = [...students];
-    const weights = [...probs];
+    setIsDrawing(true);
+    setDrawnStudents([]);
 
-    for (let i = 0; i < drawCount && available.length > 0; i++) {
-      const r = Math.random();
-      let cum = 0;
-      let idx = 0;
-      for (let j = 0; j < available.length; j++) {
-        cum += weights[j];
-        if (r <= cum) {
-          idx = j;
-          break;
+    setTimeout(() => {
+      const picked: Student[] = [];
+      const available = [...students];
+      const weights = [...probs];
+
+      for (let i = 0; i < drawCount && available.length > 0; i++) {
+        const r = Math.random();
+        let cum = 0;
+        let idx = 0;
+        for (let j = 0; j < available.length; j++) {
+          cum += weights[j];
+          if (r <= cum) {
+            idx = j;
+            break;
+          }
         }
+        picked.push(available[idx]);
+        available.splice(idx, 1);
+        weights.splice(idx, 1);
       }
-      picked.push(available[idx]);
-      available.splice(idx, 1);
-      weights.splice(idx, 1);
-    }
 
-    // Increment pastDraws for drawn students
-    setStudents((prev) =>
-      prev.map((s) =>
-        picked.find((p) => p.id === s.id)
-          ? { ...s, pastDraws: s.pastDraws + 1 }
-          : s
-      )
-    );
+      // Increment pastDraws for drawn students
+      setStudents((prev) =>
+        prev.map((s) =>
+          picked.find((p) => p.id === s.id)
+            ? { ...s, pastDraws: s.pastDraws + 1 }
+            : s
+        )
+      );
 
-    setHistory((h) => [
-      { time: new Date().toLocaleTimeString(), picked },
-      ...h,
-    ]);
+      setHistory((h) => [
+        { time: new Date().toLocaleTimeString(), picked },
+        ...h,
+      ]);
+      setDrawnStudents(picked);
+      setIsDrawing(false);
+    }, 3000);
   }
 
   return (
     <DefaultLayout>
+      {drawnStudents.length > 0 && !isDrawing && <Confetti />}
       <section className="py-2">
         <div className="text-3xl font-bold mb-6 text-center">
           <h1 className={title()}>Tirage au sort</h1>
         </div>
 
+        {isDrawing && (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">Tirage en cours...</h2>
+          </div>
+        )}
+
+        {drawnStudents.length > 0 && !isDrawing && (
+          <Card className="mb-6">
+            <CardHeader>
+              <h2 className="text-xl font-semibold">Étudiants tirés au sort</h2>
+            </CardHeader>
+            <CardBody className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {drawnStudents.map((student) => (
+                <DrawnStudentCard key={student.id} student={student} />
+              ))}
+            </CardBody>
+          </Card>
+        )}
+
         <Card className="mb-6">
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Sélectionner les étudiants</h2>
-            <Button color="primary" onPress={handleDraw}>
-              Tirer {drawCount} étudiant(s)
+            <Button color="primary" onPress={handleDraw} disabled={isDrawing}>
+              {isDrawing ? "Tirage..." : `Tirer ${drawCount} étudiant(s)`}
             </Button>
           </CardHeader>
           <CardBody className="flex items-center gap-4">
@@ -163,7 +194,9 @@ export default function DrawerPage() {
           </CardHeader>
           <CardBody>
             {history.length === 0 ? (
-              <p className="text-slate-500">Aucun tirage effectué pour le moment.</p>
+              <p className="text-slate-500">
+                Aucun tirage effectué pour le moment.
+              </p>
             ) : (
               <ul className="space-y-2">
                 {history.map((h, idx) => (
