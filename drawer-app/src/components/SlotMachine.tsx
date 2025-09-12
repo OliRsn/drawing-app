@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardBody } from '@heroui/card';
 
@@ -15,10 +16,11 @@ interface SlotMachineProps {
 }
 
 const REEL_ITEM_WIDTH = 150; // w-36
-const VISIBLE_ITEMS = 3;
 
 export const SlotMachine = ({ students, winner, animationDelay, probabilities }: SlotMachineProps) => {
   const [isSpinning, setIsSpinning] = useState(true);
+  const [visibleItems, setVisibleItems] = useState(3);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const reel = useMemo(() => {
     const weightedList: Student[] = [];
@@ -58,14 +60,33 @@ export const SlotMachine = ({ students, winner, animationDelay, probabilities }:
     return () => clearTimeout(timer);
   }, [animationDelay]);
 
-  const containerWidth = REEL_ITEM_WIDTH * VISIBLE_ITEMS;
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        let numItems = Math.floor(containerWidth / REEL_ITEM_WIDTH);
+        if (numItems % 2 === 0) {
+          numItems = numItems > 1 ? numItems - 1 : 1;
+        }
+        setVisibleItems(numItems);
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const containerWidth = REEL_ITEM_WIDTH * visibleItems;
   const offset = (containerWidth - REEL_ITEM_WIDTH) / 2;
 
   return (
-    <Card className="w-full flex justify-center items-center">
-      <CardBody>
+    <Card className="w-full">
+      <CardBody ref={containerRef} className="flex justify-center items-center">
         <div
-          className="relative text-center text-2xl font-bold overflow-hidden"
+          className="relative text-center text-2xl font-bold overflow-hidden mx-auto"
           style={{ width: containerWidth }}
         >
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150px] h-full border-2 border-primary rounded-lg z-10" />
