@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardBody } from '@heroui/card';
@@ -16,6 +15,7 @@ interface SlotMachineProps {
 }
 
 const REEL_ITEM_WIDTH = 150; // w-36
+const VISIBLE_ITEMS = 3;
 
 export const SlotMachine = ({ students, winner, animationDelay, probabilities }: SlotMachineProps) => {
   const [isSpinning, setIsSpinning] = useState(true);
@@ -58,19 +58,24 @@ export const SlotMachine = ({ students, winner, animationDelay, probabilities }:
     return () => clearTimeout(timer);
   }, [animationDelay]);
 
+  const containerWidth = REEL_ITEM_WIDTH * VISIBLE_ITEMS;
+  const offset = (containerWidth - REEL_ITEM_WIDTH) / 2;
+
   return (
     <Card className="w-full flex justify-center items-center">
       <CardBody>
         <div
           className="relative text-center text-2xl font-bold overflow-hidden"
-          style={{ width: REEL_ITEM_WIDTH }}
+          style={{ width: containerWidth }}
         >
-          <div className="absolute top-0 left-0 w-full h-full border-2 border-primary rounded-lg z-10" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150px] h-full border-2 border-primary rounded-lg z-10" />
+          <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-background to-transparent z-20" />
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-background to-transparent z-20" />
           <motion.div
             animate={{
               x: isSpinning
                 ? - (reel.length * REEL_ITEM_WIDTH)
-                : - (winnerIndex * REEL_ITEM_WIDTH),
+                : - (winnerIndex * REEL_ITEM_WIDTH - offset),
             }}
             transition={{
               duration: isSpinning ? 5 : 2,
