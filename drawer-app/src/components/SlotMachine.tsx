@@ -75,7 +75,7 @@ export const SlotMachine = ({
 
   return (
     <Card className="w-full group relative">
-      <CardBody ref={containerRef} className="flex justify-center items-center">
+      <CardBody ref={containerRef} className="flex justify-center items-center overflow-x-hidden">
         <div
           className="relative text-center text-2xl font-bold overflow-hidden mx-auto"
           style={{ width: containerWidth }}
