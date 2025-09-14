@@ -21,7 +21,7 @@ def init_db():
 
     # Create 5 grades for 5 different students
     for i in range(5):
-        crud.create_student_grade(db, grade=schemas.GradeCreate(subject="Math", grade=10 + i), student_id=students[i].id)
+        crud.create_student_grade(db, grade=schemas.GradeCreate(grade=10 + i), student_id=students[i].id)
 
     db.close()
 
