@@ -2,7 +2,7 @@ import { Route, Routes } from "react-router-dom";
 
 import IndexPage from "@/pages/index";
 import DrawerPage from "@/pages/drawer";
-import BlogPage from "@/pages/admin";
+import ClassroomsPage from "@/pages/classrooms";
 import AboutPage from "@/pages/about";
 
 function App() {
@@ -10,7 +10,7 @@ function App() {
     <Routes>
       <Route element={<IndexPage />} path="/" />
       <Route element={<DrawerPage />} path="/drawer" /> 
-      <Route element={<BlogPage />} path="/admin" />
+      <Route element={<ClassroomsPage />} path="/classrooms" />
       <Route element={<AboutPage />} path="/about" />
     </Routes>
   );
