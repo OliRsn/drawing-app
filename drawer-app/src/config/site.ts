@@ -13,8 +13,8 @@ export const siteConfig = {
       href: "/drawer",
     },
     {
-      label: "Admin",
-      href: "/admin",
+      label: "Classe",
+      href: "/classrooms",
     },
     {
       label: "A Propos",
