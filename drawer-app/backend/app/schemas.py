@@ -13,7 +13,7 @@ class Grade(GradeBase):
     student_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class StudentBase(BaseModel):
     name: str
@@ -27,7 +27,7 @@ class Student(StudentBase):
     grades: List[Grade] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ClassroomBase(BaseModel):
     name: str
@@ -40,4 +40,4 @@ class Classroom(ClassroomBase):
     students: List[Student] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
