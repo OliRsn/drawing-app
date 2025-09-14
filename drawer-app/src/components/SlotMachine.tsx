@@ -14,7 +14,6 @@ interface SlotMachineProps {
   winner: Student | null;
   animationDelay: number; // ms
   spinId: number; // changes each time we spin
-  onRemove: () => void;
 }
 
 const REEL_ITEM_WIDTH = 150;
@@ -24,7 +23,6 @@ export const SlotMachine = ({
   winner,
   animationDelay,
   spinId,
-  onRemove,
 }: SlotMachineProps) => {
   const [visibleItems, setVisibleItems] = useState(3);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,15 +75,6 @@ export const SlotMachine = ({
 
   return (
     <Card className="w-full group relative">
-      <Button
-        className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity"
-        variant="light"
-        size="sm"
-        onPress={onRemove}
-      >
-        <XIcon className="w-4 h-4" />
-      </Button>
-
       <CardBody ref={containerRef} className="flex justify-center items-center">
         <div
           className="relative text-center text-2xl font-bold overflow-hidden mx-auto"
