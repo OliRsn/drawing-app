@@ -51,8 +51,9 @@ function computeWeights(
 export default function DrawerPage() {
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [drawnStudents, setDrawnStudents] = useState<Student[]>([null]);
+  const [drawnStudents, setDrawnStudents] = useState<(Student | null)[]>([null]);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [spinId, setSpinId] = useState(0);
 
   const probs = useMemo(
     () =>
@@ -66,23 +67,23 @@ export default function DrawerPage() {
 
   const sortedStudentsWithProbs = useMemo(() => {
     return students
-      .map((student, index) => ({
-        student,
-        prob: probs[index],
-      }))
+      .map((student, index) => ({ student, prob: probs[index] }))
       .sort((a, b) => b.prob - a.prob);
   }, [students, probs]);
 
+  // Stop drawing after slots finish
   useEffect(() => {
     if (isDrawing) {
-      const totalAnimationTime = 8000 + (drawnStudents.length - 1) * 1000;
+      const slotDuration = 5000; // ms, matches SlotMachine
+      const stagger = 1000; // ms
+      const totalAnimationTime =
+        slotDuration + (drawnStudents.length - 1) * stagger;
       const timer = setTimeout(() => setIsDrawing(false), totalAnimationTime);
       return () => clearTimeout(timer);
     }
   }, [isDrawing, drawnStudents.length]);
 
   function handleDraw() {
-    setIsDrawing(true);
     const picked: Student[] = [];
     const available = [...students];
     const weights = [...probs];
@@ -103,7 +104,7 @@ export default function DrawerPage() {
       weights.splice(idx, 1);
     }
 
-    // Increment pastDraws for drawn students
+    // Update draws count
     setStudents((prev) =>
       prev.map((s) =>
         picked.find((p) => p.id === s.id)
@@ -112,11 +113,16 @@ export default function DrawerPage() {
       )
     );
 
+    // Save to history
     setHistory((h) => [
       { time: new Date().toLocaleTimeString(), picked },
       ...h,
     ]);
+
+    // Trigger spin
     setDrawnStudents(picked);
+    setSpinId((id) => id + 1);
+    setIsDrawing(true);
   }
 
   const addSlotMachine = () => {
@@ -134,6 +140,7 @@ export default function DrawerPage() {
           <h1 className={title()}>Tirage au sort</h1>
         </div>
 
+        {/* Draw panel */}
         <Card className="mb-6">
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Tirage</h2>
@@ -154,13 +161,14 @@ export default function DrawerPage() {
                   <SlotMachine
                     students={students}
                     winner={student}
-                    isSpinning={isDrawing}
                     animationDelay={index * 1000}
+                    spinId={spinId}
                     onRemove={() => removeSlotMachine(index)}
                   />
                 </motion.div>
               ))}
             </AnimatePresence>
+
             {!isDrawing && (
               <Button
                 variant="outline"
