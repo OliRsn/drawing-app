@@ -156,7 +156,7 @@ export default function DrawerPage() {
 
   return (
     <DefaultLayout>
-      <section className="py-2">
+      <section className="py-2 overflow-x-hidden">
         <div className="text-3xl font-bold mb-6 text-center">
           <h1 className={title()}>Tirage au sort</h1>
         </div>
