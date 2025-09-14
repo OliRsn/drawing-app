@@ -129,8 +129,10 @@ export default function DrawerPage() {
     setDrawnStudents((prev) => [...prev, null]);
   };
 
-  const removeSlotMachine = (index: number) => {
-    setDrawnStudents((prev) => prev.filter((_, i) => i !== index));
+  const removeSlotMachine = () => {
+    if (drawnStudents.length > 1) {
+      setDrawnStudents((prev) => prev.slice(0, -1));
+    }
   };
 
   return (
@@ -163,21 +165,29 @@ export default function DrawerPage() {
                     winner={student}
                     animationDelay={index * 1000}
                     spinId={spinId}
-                    onRemove={() => removeSlotMachine(index)}
                   />
                 </motion.div>
               ))}
             </AnimatePresence>
 
             {!isDrawing && (
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onPress={addSlotMachine}
-              >
-                <PlusIcon className="w-4 h-4 mr-2" />
-                Ajouter un étudiant
-              </Button>
+              <div className="flex justify-center gap-4 mt-4">
+                <Button
+                  color="primary"
+                  onPress={addSlotMachine}
+                >
+                  <PlusIcon className="w-4 h-4 mr-2" />
+                  Ajouter un étudiant
+                </Button>
+                <Button
+                  variant="light"
+                  color="danger"
+                  onPress={removeSlotMachine}
+                  disabled={drawnStudents.length <= 1}
+                >
+                  Enlever un étudiant
+                </Button>
+              </div>
             )}
           </CardBody>
         </Card>
