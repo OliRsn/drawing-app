@@ -35,3 +35,20 @@ The app needs to remain simple but aesthetic, in order for the student to enjox 
 - Make a beautiful and modern drawing animation 
 - Assist with error handling and retry logic
 - Optimize and refactor logic for reusability
+
+---
+
+### Backend Server
+
+To start the backend server, run the following command from the root directory:
+
+```bash
+conda run -n drawing-app-env uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
+```
+
+You can access the Swagger UI from your Windows browser at the following address:
+
+[http://172.26.138.71:8000/docs](http://172.26.138.71:8000/docs)
+
+**Note:** The WSL IP address might change after a reboot. If you can't access the server, you can find the new IP address by running `ip addr` in your WSL terminal and looking for the `inet` address under the `eth0` interface. I will check the IP address for you each time you ask me to start the server.
+
