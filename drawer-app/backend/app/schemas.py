@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class GradeBase(BaseModel):
-    subject: str
     grade: float
 
 class GradeCreate(GradeBase):
