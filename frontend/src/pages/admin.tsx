@@ -3,7 +3,7 @@ import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
-import { Spinner } from "@heroui/react";
+import { Spinner, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/react";
 import axios from "axios";
 
 import { title } from "@/components/primitives";
@@ -62,6 +62,16 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDeleteClassroom(classroomId: number) {
+    try {
+      await axios.delete(`${API_URL}/classrooms/${classroomId}`);
+      fetchClassrooms();
+      setSelectedClassroom(null);
+    } catch (error) {
+      console.error("Error deleting classroom:", error);
+    }
+  }
+
   async function fetchStudents(classroomId: number) {
     try {
       const response = await axios.get(`${API_URL}/classrooms/${classroomId}`);
@@ -106,6 +116,17 @@ export default function AdminPage() {
     }
   }
 
+  async function handleResetWeights() {
+    if (!selectedClassroom) return;
+
+    try {
+      await axios.post(`${API_URL}/classrooms/${selectedClassroom.id}/reset-weights`);
+      fetchStudents(selectedClassroom.id);
+    } catch (error) {
+      console.error("Error resetting weights:", error);
+    }
+  }
+
   return (
     <DefaultLayout>
       <section className="py-2">
@@ -129,9 +150,14 @@ export default function AdminPage() {
                   {classrooms.map((classroom) => (
                     <div key={classroom.id} className="flex justify-between items-center">
                       <span>{classroom.name}</span>
-                      <Button size="sm" variant="light" onPress={() => fetchStudents(classroom.id)}>
-                        Gérer
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="light" onPress={() => fetchStudents(classroom.id)}>
+                          Gérer
+                        </Button>
+                        <Button size="sm" color="danger" variant="light" onPress={() => handleDeleteClassroom(classroom.id)}>
+                          Supprimer
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   <div className="flex gap-2 mt-4">
@@ -154,47 +180,75 @@ export default function AdminPage() {
               <CardBody>
                 {selectedClassroom ? (
                   <div className="flex flex-col gap-4">
-                    {selectedClassroom.students.map((student) => (
-                      <div key={student.id} className="flex justify-between items-center">
-                        {editingStudent && editingStudent.id === student.id ? (
-                          <div className="flex items-center gap-2">
+                    <Table aria-label="Table des étudiants">
+                      <TableHeader>
+                        <TableColumn>Nom</TableColumn>
+                        <TableColumn>Poids</TableColumn>
+                        <TableColumn>Tirages</TableColumn>
+                        <TableColumn>Actions</TableColumn>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedClassroom.students.map((student) => (
+                          <TableRow key={student.id}>
+                            <TableCell>
+                              {editingStudent && editingStudent.id === student.id ? (
+                                <Input
+                                  value={editingStudent.name}
+                                  onValueChange={(name) => setEditingStudent({ ...editingStudent, name })}
+                                />
+                              ) : (
+                                student.name
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingStudent && editingStudent.id === student.id ? (
+                                <Input
+                                  type="number"
+                                  value={editingStudent.weight.toString()}
+                                  onValueChange={(weight) => setEditingStudent({ ...editingStudent, weight: parseInt(weight) })}
+                                />
+                              ) : (
+                                student.weight
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingStudent && editingStudent.id === student.id ? (
+                                <Input
+                                  type="number"
+                                  value={editingStudent.draw_count.toString()}
+                                  onValueChange={(draw_count) => setEditingStudent({ ...editingStudent, draw_count: parseInt(draw_count) })}
+                                />
+                              ) : (
+                                student.draw_count
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {editingStudent && editingStudent.id === student.id ? (
+                                <div className="flex items-center gap-2">
+                                  <Button size="sm" onPress={() => handleUpdateStudent(editingStudent)}>Sauvegarder</Button>
+                                  <Button size="sm" variant="light" onPress={() => setEditingStudent(null)}>Annuler</Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <Button size="sm" variant="light" onPress={() => setEditingStudent(student)}>Modifier</Button>
+                                  <Button size="sm" color="danger" variant="light" onPress={() => handleDeleteStudent(student.id)}>Supprimer</Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <div className="flex justify-between items-center mt-4">
+                        <div className="flex gap-2">
                             <Input
-                              value={editingStudent.name}
-                              onValueChange={(name) => setEditingStudent({ ...editingStudent, name })}
+                                placeholder="Nouvel étudiant"
+                                value={newStudentName}
+                                onValueChange={setNewStudentName}
                             />
-                            <Input
-                              type="number"
-                              value={editingStudent.weight.toString()}
-                              onValueChange={(weight) => setEditingStudent({ ...editingStudent, weight: parseInt(weight) })}
-                            />
-                            <Input
-                              type="number"
-                              value={editingStudent.draw_count.toString()}
-                              onValueChange={(draw_count) => setEditingStudent({ ...editingStudent, draw_count: parseInt(draw_count) })}
-                            />
-                            <Button size="sm" onPress={() => handleUpdateStudent(editingStudent)}>Sauvegarder</Button>
-                            <Button size="sm" variant="light" onPress={() => setEditingStudent(null)}>Annuler</Button>
-                          </div>
-                        ) : (
-                          <>
-                            <span>{student.name}</span>
-                            <div className="flex items-center gap-2">
-                              <span>Poids: {student.weight}</span>
-                              <span>Tirages: {student.draw_count}</span>
-                              <Button size="sm" variant="light" onPress={() => setEditingStudent(student)}>Modifier</Button>
-                              <Button size="sm" color="danger" variant="light" onPress={() => handleDeleteStudent(student.id)}>Supprimer</Button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                    <div className="flex gap-2 mt-4">
-                      <Input
-                        placeholder="Nouvel étudiant"
-                        value={newStudentName}
-                        onValueChange={setNewStudentName}
-                      />
-                      <Button onPress={handleCreateStudent}>Ajouter</Button>
+                            <Button onPress={handleCreateStudent}>Ajouter</Button>
+                        </div>
+                        <Button color="warning" variant="light" onPress={handleResetWeights}>Réinitialiser</Button>
                     </div>
                   </div>
                 ) : (

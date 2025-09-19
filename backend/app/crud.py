@@ -24,7 +24,18 @@ def delete_classroom(db: Session, classroom_id: int):
     if db_classroom:
         db.delete(db_classroom)
         db.commit()
+        db.expire(db_classroom)
     return db_classroom
+
+
+def reset_student_weights_in_classroom(db: Session, classroom_id: int):
+    students = db.query(models.Student).filter(models.Student.classroom_id == classroom_id).all()
+    for student in students:
+        student.weight = 1.0
+        student.draw_count = 0
+    db.commit()
+    return {"message": "Weights and draw counts reset successfully"}
+
 
 # Student CRUD
 
