@@ -3,7 +3,7 @@ import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
-import { Spinner, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/react";
+import { Spinner, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
 import axios from "axios";
 
 import { title } from "@/components/primitives";
@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [newClassName, setNewClassName] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
   useEffect(() => {
     fetchClassrooms();
@@ -208,8 +209,22 @@ export default function AdminPage() {
                               {editingStudent && editingStudent.id === student.id ? (
                                 <Input
                                   type="number"
+                                  min="0"
+                                  max="1"
+                                  step="0.01"
                                   value={editingStudent.weight.toString()}
-                                  onValueChange={(weight) => setEditingStudent({ ...editingStudent, weight: parseInt(weight) })}
+                                  onValueChange={(weight) => {
+                                    let newWeight = parseFloat(weight);
+                                    if (isNaN(newWeight)) {
+                                      newWeight = 0;
+                                    }
+                                    if (newWeight > 1) {
+                                      newWeight = 1;
+                                    } else if (newWeight < 0) {
+                                      newWeight = 0;
+                                    }
+                                    setEditingStudent({ ...editingStudent, weight: newWeight });
+                                  }}
                                 />
                               ) : (
                                 student.weight
@@ -252,7 +267,7 @@ export default function AdminPage() {
                             />
                             <Button onPress={handleCreateStudent}>Ajouter</Button>
                         </div>
-                        <Button color="warning" variant="light" onPress={handleResetWeights}>Réinitialiser</Button>
+                        <Button color="warning" variant="light" onPress={() => setIsResetModalOpen(true)}>Réinitialiser</Button>
                     </div>
                   </div>
                 ) : (
@@ -263,6 +278,29 @@ export default function AdminPage() {
           </div>
         )}
       </section>
+
+      <Modal isOpen={isResetModalOpen} onOpenChange={setIsResetModalOpen}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Confirmation de réinitialisation</ModalHeader>
+              <ModalBody>
+                <p> 
+                  Êtes-vous sûr de vouloir réinitialiser les poids et le nombre de tirages de tous les étudiants de cette classe? Cette action est irréversible.
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose}>
+                  Annuler
+                </Button>
+                <Button color="danger" onPress={() => { handleResetWeights(); onClose(); }}>
+                  Confirmer
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </DefaultLayout>
   );
 }
