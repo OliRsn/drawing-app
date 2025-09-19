@@ -16,6 +16,8 @@ class Student(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
+    weight = Column(Float, default=1.0)
+    draw_count = Column(Integer, default=0)
     classroom_id = Column(Integer, ForeignKey("classrooms.id"))
 
     classroom = relationship("Classroom", back_populates="students")

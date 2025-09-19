@@ -16,6 +16,8 @@ class Grade(GradeBase):
 
 class StudentBase(BaseModel):
     name: str
+    weight: Optional[float] = 1.0
+    draw_count: Optional[int] = 0
 
 class StudentCreate(StudentBase):
     pass
@@ -23,6 +25,9 @@ class StudentCreate(StudentBase):
 class Student(StudentBase):
     id: int
     classroom_id: int
+    weight: float
+    draw_count: int
+    probability: Optional[float] = None
     grades: List[Grade] = []
 
     class Config:
@@ -40,3 +45,10 @@ class Classroom(ClassroomBase):
 
     class Config:
         from_attributes = True
+
+class DrawCreate(BaseModel):
+    num_students: int
+    student_ids: Optional[List[int]] = None
+
+class StudentIDs(BaseModel):
+    student_ids: List[int]

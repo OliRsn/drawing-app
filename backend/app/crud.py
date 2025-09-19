@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
+import random
+from typing import List, Optional
 
-from . import models, schemas
+from . import models, schemas, drawing_logic
 
 # Classroom CRUD
 
@@ -31,6 +33,52 @@ def get_student(db: Session, student_id: int):
 
 def get_students(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Student).offset(skip).limit(limit).all()
+
+def get_students_with_probabilities_by_classroom(db: Session, classroom_id: int):
+    students = db.query(models.Student).filter(models.Student.classroom_id == classroom_id).all()
+    if not students:
+        return []
+
+    total_weight = sum([student.weight for student in students])
+    if total_weight == 0:
+        for student in students:
+            student.probability = 1 / len(students)
+    else:
+        for student in students:
+            student.probability = student.weight / total_weight
+
+    return students
+
+def get_drawn_students(db: Session, classroom_id: int, num_students: int, student_ids: Optional[List[int]] = None):
+    query = db.query(models.Student).filter(models.Student.classroom_id == classroom_id)
+    if student_ids:
+        query = query.filter(models.Student.id.in_(student_ids))
+    
+    students = query.all()
+    
+    if not students:
+        return []
+
+    weights = [student.weight for student in students]
+    total_weight = sum(weights)
+    if total_weight == 0:
+        probabilities = [1/len(students)] * len(students)
+    else:
+        probabilities = [w / total_weight for w in weights]
+
+    drawn_students = random.choices(students, weights=probabilities, k=num_students)
+
+    return drawn_students
+
+def update_draw_count(db: Session, student_ids: List[int]):
+    students = db.query(models.Student).filter(models.Student.id.in_(student_ids)).all()
+    for student in students:
+        student.draw_count += 1
+    
+    drawing_logic.adjust_weights(students)
+    db.commit()
+
+    return students
 
 def create_student(db: Session, student: schemas.StudentCreate, classroom_id: int):
     db_student = models.Student(**student.dict(), classroom_id=classroom_id)

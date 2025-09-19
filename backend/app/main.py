@@ -1,5 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
+from typing import List, Optional
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -79,6 +80,32 @@ def delete_grade(grade_id: int, db: Session = Depends(get_db)):
     if db_grade is None:
         raise HTTPException(status_code=404, detail="Grade not found")
     return db_grade
+
+
+@app.get("/classrooms/{classroom_id}/students/probabilities", response_model=list[schemas.Student])
+def read_student_probabilities(classroom_id: int, db: Session = Depends(get_db)):
+    students = crud.get_students_with_probabilities_by_classroom(db, classroom_id=classroom_id)
+    return students
+
+@app.post("/classrooms/{classroom_id}/draw", response_model=list[schemas.Student])
+def draw_students_for_classroom(
+    classroom_id: int,
+    draw_input: schemas.DrawCreate,
+    db: Session = Depends(get_db)
+):
+    return crud.get_drawn_students(
+        db=db,
+        classroom_id=classroom_id,
+        num_students=draw_input.num_students,
+        student_ids=draw_input.student_ids
+    )
+
+@app.post("/students/draw_count", response_model=list[schemas.Student])
+def update_draw_count(
+    student_ids: schemas.StudentIDs,
+    db: Session = Depends(get_db)
+):
+    return crud.update_draw_count(db=db, student_ids=student_ids.student_ids)
 
 
 @app.get("/health")
