@@ -34,6 +34,8 @@ def get_student(db: Session, student_id: int):
 def get_students(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Student).offset(skip).limit(limit).all()
 
+
+
 def get_students_with_probabilities_by_classroom(db: Session, classroom_id: int):
     students = db.query(models.Student).filter(models.Student.classroom_id == classroom_id).all()
     if not students:
@@ -85,6 +87,16 @@ def create_student(db: Session, student: schemas.StudentCreate, classroom_id: in
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
+    return db_student
+
+def update_student(db: Session, student_id: int, student: schemas.StudentCreate):
+    db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if db_student:
+        db_student.name = student.name
+        db_student.weight = student.weight
+        db_student.draw_count = student.draw_count
+        db.commit()
+        db.refresh(db_student)
     return db_student
 
 def delete_student(db: Session, student_id: int):
