@@ -104,6 +104,7 @@ def delete_student(db: Session, student_id: int):
     if db_student:
         db.delete(db_student)
         db.commit()
+        db.expire(db_student)
     return db_student
 
 # Grade CRUD
