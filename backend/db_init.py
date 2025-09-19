@@ -23,6 +23,9 @@ def init_db():
     for i in range(5):
         crud.create_student_grade(db, grade=schemas.GradeCreate(grade=10 + i), student_id=students[i].id)
 
+    # Create default settings
+    crud.create_or_update_setting(db, setting=schemas.SettingCreate(key="numSlotMachines", value="4"))
+
     db.close()
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import axios from "axios";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
+import GlobalSettings from "@/components/GlobalSettings";
 
 // === Types ===
 interface Student {
@@ -140,37 +141,40 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Classrooms Panel */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-xl font-semibold">Classes</h2>
-              </CardHeader>
-              <CardBody>
-                <div className="flex flex-col gap-4">
-                  {classrooms.map((classroom) => (
-                    <div key={classroom.id} className="flex justify-between items-center">
-                      <span>{classroom.name}</span>
-                      <div className="flex items-center gap-2">
-                        <Button size="sm" variant="light" onPress={() => fetchStudents(classroom.id)}>
-                          Gérer
-                        </Button>
-                        <Button size="sm" color="danger" variant="light" onPress={() => handleDeleteClassroom(classroom.id)}>
-                          Supprimer
-                        </Button>
+            <div className="flex flex-col gap-6">
+              <GlobalSettings />
+              {/* Classrooms Panel */}
+              <Card>
+                <CardHeader>
+                  <h2 className="text-xl font-semibold">Classes</h2>
+                </CardHeader>
+                <CardBody>
+                  <div className="flex flex-col gap-4">
+                    {classrooms.map((classroom) => (
+                      <div key={classroom.id} className="flex justify-between items-center">
+                        <span>{classroom.name}</span>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="light" onPress={() => fetchStudents(classroom.id)}>
+                            Gérer
+                          </Button>
+                          <Button size="sm" color="danger" variant="light" onPress={() => handleDeleteClassroom(classroom.id)}>
+                            Supprimer
+                          </Button>
+                        </div>
                       </div>
+                    ))}
+                    <div className="flex gap-2 mt-4">
+                      <Input
+                        placeholder="Nouvelle classe"
+                        value={newClassName}
+                        onValueChange={setNewClassName}
+                      />
+                      <Button onPress={handleCreateClassroom}>Créer</Button>
                     </div>
-                  ))}
-                  <div className="flex gap-2 mt-4">
-                    <Input
-                      placeholder="Nouvelle classe"
-                      value={newClassName}
-                      onValueChange={setNewClassName}
-                    />
-                    <Button onPress={handleCreateClassroom}>Créer</Button>
                   </div>
-                </div>
-              </CardBody>
-            </Card>
+                </CardBody>
+              </Card>
+            </div>
 
             {/* Students Panel */}
             <Card>

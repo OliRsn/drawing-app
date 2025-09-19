@@ -31,3 +31,9 @@ class Grade(Base):
     student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"))
 
     student = relationship("Student", back_populates="grades")
+
+class Setting(Base):
+    __tablename__ = "settings"
+
+    key = Column(String, primary_key=True, index=True)
+    value = Column(String)

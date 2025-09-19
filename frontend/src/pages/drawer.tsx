@@ -49,21 +49,37 @@ export default function DrawerPage() {
     "probability"
   );
   const [sortBy, setSortBy] = useState<"name" | "value">("value");
+  const [numSlotMachines, setNumSlotMachines] = useState(3);
 
   useEffect(() => {
-    const fetchClassrooms = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await axios.get(`${API_URL}/classrooms/`);
-        setClassrooms(response.data);
-        if (response.data.length > 0) {
-          setSelectedClassroom(response.data[0]);
+        // Fetch classrooms
+        const classroomsResponse = await axios.get(`${API_URL}/classrooms/`);
+        setClassrooms(classroomsResponse.data);
+        if (classroomsResponse.data.length > 0) {
+          setSelectedClassroom(classroomsResponse.data[0]);
         }
+
+        // Fetch number of slot machines
+        try {
+          const numSlotMachinesResponse = await axios.get(`${API_URL}/settings/numSlotMachines`);
+          const num = parseInt(numSlotMachinesResponse.data.value, 10);
+          setNumSlotMachines(num);
+          setDrawnStudents(Array(num).fill(null));
+        } catch (error) {
+          if (axios.isAxiosError(error) && error.response?.status === 404) {
+            // Setting not found, use default
+            setDrawnStudents(Array(3).fill(null));
+          }
+        }
+
       } catch (error) {
-        console.error("Error fetching classrooms:", error);
+        console.error("Error fetching initial data:", error);
       }
     };
 
-    fetchClassrooms();
+    fetchInitialData();
   }, []);
 
   useEffect(() => {

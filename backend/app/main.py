@@ -138,3 +138,16 @@ def update_draw_count(
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/settings/{key}", response_model=schemas.Setting)
+def read_setting(key: str, db: Session = Depends(get_db)):
+    db_setting = crud.get_setting(db, key=key)
+    if db_setting is None:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    return db_setting
+
+
+@app.put("/settings/", response_model=schemas.Setting)
+def create_or_update_setting(setting: schemas.SettingCreate, db: Session = Depends(get_db)):
+    return crud.create_or_update_setting(db=db, setting=setting)
