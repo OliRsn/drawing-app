@@ -14,7 +14,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -53,6 +53,11 @@ def delete_classroom(classroom_id: int, db: Session = Depends(get_db)):
     if db_classroom is None:
         raise HTTPException(status_code=404, detail="Classroom not found")
     return db_classroom
+
+
+@app.post("/classrooms/{classroom_id}/reset-weights")
+def reset_weights(classroom_id: int, db: Session = Depends(get_db)):
+    return crud.reset_student_weights_in_classroom(db=db, classroom_id=classroom_id)
 
 
 @app.post("/classrooms/{classroom_id}/students/", response_model=schemas.Student)

@@ -18,7 +18,7 @@ class Student(Base):
     name = Column(String, index=True)
     weight = Column(Float, default=1.0)
     draw_count = Column(Integer, default=0)
-    classroom_id = Column(Integer, ForeignKey("classrooms.id"))
+    classroom_id = Column(Integer, ForeignKey("classrooms.id", ondelete="CASCADE"))
 
     classroom = relationship("Classroom", back_populates="students")
     grades = relationship("Grade", back_populates="student")
@@ -28,6 +28,6 @@ class Grade(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     grade = Column(Float)
-    student_id = Column(Integer, ForeignKey("students.id"))
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"))
 
     student = relationship("Student", back_populates="grades")
