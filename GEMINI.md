@@ -43,7 +43,7 @@ The app needs to remain simple but aesthetic, in order for the student to enjox 
 To start the backend server, run the following command from the root directory:
 
 ```bash
-conda run -n drawing-app-env uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
+conda run -n drawer-app-env uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 ```
 
 You can access the Swagger UI from your Windows browser at the following address:
