@@ -131,3 +131,19 @@ def delete_grade(db: Session, grade_id: int):
         db.delete(db_grade)
         db.commit()
     return db_grade
+
+# Settings CRUD
+
+def get_setting(db: Session, key: str):
+    return db.query(models.Setting).filter(models.Setting.key == key).first()
+
+def create_or_update_setting(db: Session, setting: schemas.SettingCreate):
+    db_setting = get_setting(db, key=setting.key)
+    if db_setting:
+        db_setting.value = setting.value
+    else:
+        db_setting = models.Setting(key=setting.key, value=setting.value)
+        db.add(db_setting)
+    db.commit()
+    db.refresh(db_setting)
+    return db_setting
