@@ -5,6 +5,9 @@ import { Card, CardBody } from "@heroui/card";
 interface Student {
   id: number;
   name: string;
+  weight: number;
+  draw_count: number;
+  probability?: number;
 }
 
 interface SlotMachineProps {
