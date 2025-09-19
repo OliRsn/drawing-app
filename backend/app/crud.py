@@ -24,7 +24,6 @@ def delete_classroom(db: Session, classroom_id: int):
     if db_classroom:
         db.delete(db_classroom)
         db.commit()
-        db.expire(db_classroom)
     return db_classroom
 
 
@@ -115,7 +114,6 @@ def delete_student(db: Session, student_id: int):
     if db_student:
         db.delete(db_student)
         db.commit()
-        db.expire(db_student)
     return db_student
 
 # Grade CRUD
