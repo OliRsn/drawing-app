@@ -2,7 +2,7 @@ Backlog :
 - Sauvegarder l'historique des élèves tirés au sort :
   - Seulement pour les validées
   - Avec la date
-- Dans l'ADMIN : mettre un paramètre pour le nombre de slotmachine par défaut
+- Dans l'ADMIN : mettre un paramètre pour le nombre de slotmachine par défaut (Done)
 - Pouvoir supprimer des élèves du tirage au besoin 
 - Ajouter liste des noms de la classe pour pouvoir supprimer des élèves avant un tirage 
 - Pouvoir sélectionner les tirages individuellement 
