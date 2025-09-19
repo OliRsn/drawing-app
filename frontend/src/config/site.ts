@@ -5,20 +5,12 @@ export const siteConfig = {
   description: "Application de tirage au sort pour classe.",
   navItems: [
     {
-      label: "Home",
+      label: "Tirage", 
       href: "/",
     },
     {
-      label: "Tirage", 
-      href: "/drawer",
-    },
-    {
-      label: "Classe",
-      href: "/classrooms",
-    },
-    {
-      label: "A Propos",
-      href: "/about",
+      label: "Admin",
+      href: "/admin",
     },
   ],
   navMenuItems: [
