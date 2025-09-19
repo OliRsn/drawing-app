@@ -50,6 +50,11 @@ export default function DrawerPage() {
   );
   const [sortBy, setSortBy] = useState<"name" | "value">("value");
   const [numSlotMachines, setNumSlotMachines] = useState(3);
+  const [selectedToValidate, setSelectedToValidate] = useState<boolean[]>([]);
+
+  useEffect(() => {
+    setSelectedToValidate(Array(drawnStudents.length).fill(true));
+  }, [drawnStudents]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -144,7 +149,14 @@ export default function DrawerPage() {
     if (!drawnStudents.length || !drawnStudents[0]) return;
 
     setIsConfirming(true);
-    const student_ids = drawnStudents.map((s) => s!.id);
+    const student_ids = drawnStudents
+      .filter((_, index) => selectedToValidate[index])
+      .map((s) => s!.id);
+
+    if (student_ids.length === 0) {
+      setIsConfirming(false);
+      return;
+    }
 
     try {
       await axios.post(`${API_URL}/students/draw_count`, { student_ids });
@@ -236,12 +248,23 @@ export default function DrawerPage() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <SlotMachine
-                    students={slotMachineStudents}
-                    winner={student}
-                    animationDelay={index * 1000}
-                    spinId={spinId}
-                  />
+                  <div className="flex items-center gap-4">
+                    <SlotMachine
+                      students={slotMachineStudents}
+                      winner={student}
+                      animationDelay={index * 1000}
+                      spinId={spinId}
+                    />
+                    <Switch
+                      color="secondary"
+                      isSelected={selectedToValidate[index] ?? true}
+                      onValueChange={(isSelected) => {
+                        const newSelected = [...selectedToValidate];
+                        newSelected[index] = isSelected;
+                        setSelectedToValidate(newSelected);
+                      }}
+                    />
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>

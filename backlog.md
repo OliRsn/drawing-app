@@ -2,11 +2,10 @@ Backlog :
 - Sauvegarder l'historique des élèves tirés au sort :
   - Seulement pour les validées
   - Avec la date
-- Dans l'ADMIN : mettre un paramètre pour le nombre de slotmachine par défaut (Done)
-- Pouvoir supprimer des élèves du tirage au besoin 
+- Dans l'ADMIN : mettre un paramètre pour le nombre de slotmachine par défaut (Done) 
 - Ajouter liste des noms de la classe pour pouvoir supprimer des élèves avant un tirage 
-- Pouvoir sélectionner les tirages individuellement 
+- Pouvoir sélectionner les tirages individuellement (Done)
 - Revoir l'animation pour que les prénoms défilent moins vite ? 
 - Ajouter la possibilité d'avoir des probas pour différents exercices
   - Choisir la classe et l'exercice pour un tirage 
-  - Dans admin choisir un exercice par défaut (Echauffement) 
+  - Dans admin choisir un exercice par défaut (Echauffement)
