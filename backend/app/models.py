@@ -9,7 +9,7 @@ class Classroom(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
 
-    students = relationship("Student", back_populates="classroom")
+    students = relationship("Student", back_populates="classroom", cascade="all, delete-orphan")
 
 class Student(Base):
     __tablename__ = "students"
@@ -21,7 +21,7 @@ class Student(Base):
     classroom_id = Column(Integer, ForeignKey("classrooms.id", ondelete="CASCADE"))
 
     classroom = relationship("Classroom", back_populates="students")
-    grades = relationship("Grade", back_populates="student")
+    grades = relationship("Grade", back_populates="student", cascade="all, delete-orphan")
 
 class Grade(Base):
     __tablename__ = "grades"
