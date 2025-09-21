@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import { Spinner } from "@heroui/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { PlusIcon, ChartBarIcon, AdjustmentsHorizontalIcon, CheckIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, ChartBarIcon, AdjustmentsHorizontalIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { Switch } from "@heroui/switch";
 import axios from "axios";
 
@@ -33,7 +33,7 @@ interface Classroom {
 const API_URL = import.meta.env.VITE_API_URL;
 
 // === Component ===
-export default function DrawerPage() {
+export function DrawerPage() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
@@ -51,6 +51,8 @@ export default function DrawerPage() {
   const [sortBy, setSortBy] = useState<"name" | "value">("value");
   const [numSlotMachines, setNumSlotMachines] = useState(3);
   const [selectedToValidate, setSelectedToValidate] = useState<boolean[]>([]);
+  const [isStudentSelectionOpen, setIsStudentSelectionOpen] = useState(false);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     setSelectedToValidate(Array(drawnStudents.length).fill(true));
@@ -94,7 +96,10 @@ export default function DrawerPage() {
           const response = await axios.get(
             `${API_URL}/classrooms/${selectedClassroom.id}/students/probabilities`
           );
-          setStudents(response.data);
+          const fetchedStudents: Student[] = response.data;
+          setStudents(fetchedStudents);
+          setSelectedStudentIds(new Set(fetchedStudents.map(s => s.id)));
+          setSlotMachineStudents(fetchedStudents);
         } catch (error) {
           console.error("Error fetching students:", error);
         }
@@ -104,9 +109,7 @@ export default function DrawerPage() {
     }
   }, [selectedClassroom]);
 
-  useEffect(() => {
-    setSlotMachineStudents(students);
-  }, [students]);
+
 
   // Stop drawing after slots finish
   useEffect(() => {
@@ -124,12 +127,14 @@ export default function DrawerPage() {
     if (!selectedClassroom) return;
 
     setHasConfirmed(false);
-    setSlotMachineStudents(students);
+    const student_ids = Array.from(selectedStudentIds);
+    setSlotMachineStudents(students.filter(s => selectedStudentIds.has(s.id)));
     try {
       const response = await axios.post(
         `${API_URL}/classrooms/${selectedClassroom.id}/draw`,
         {
           num_students: drawnStudents.length,
+          student_ids: student_ids,
         }
       );
       const picked = response.data;
@@ -229,6 +234,40 @@ export default function DrawerPage() {
             ))}
           </Select>
         </div>
+
+        {/* Student Selection */}
+        <Card className="mb-6">
+          <CardHeader className="flex justify-between items-center cursor-pointer" onClick={() => setIsStudentSelectionOpen(!isStudentSelectionOpen)}>
+            <h2 className="text-xl font-semibold">Sélection des élèves</h2>
+            {isStudentSelectionOpen ? <ChevronUpIcon className="w-6 h-6" /> : <ChevronDownIcon className="w-6 h-6" />}
+          </CardHeader>
+          {isStudentSelectionOpen && (
+            <CardBody>
+              <div className="flex flex-wrap gap-2">
+                {[...students]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((student) => (
+                    <Button
+                      key={student.id}
+                      variant={selectedStudentIds.has(student.id) ? "flat" : "flat"}
+                      color={selectedStudentIds.has(student.id) ? "secondary" : "danger"}
+                      onPress={() => {
+                        const newSelectedStudentIds = new Set(selectedStudentIds);
+                        if (newSelectedStudentIds.has(student.id)) {
+                          newSelectedStudentIds.delete(student.id);
+                        } else {
+                          newSelectedStudentIds.add(student.id);
+                        }
+                        setSelectedStudentIds(newSelectedStudentIds);
+                      }}
+                    >
+                      {student.name}
+                    </Button>
+                  ))}
+              </div>
+            </CardBody>
+          )}
+        </Card>
 
         {/* Draw panel */}
         <Card className="mb-6">

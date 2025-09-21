@@ -1,6 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 
-import DrawerPage from "@/pages/drawer";
+import { DrawerPage } from "@/pages/drawer";
 import AdminPage from "@/pages/admin";
 
 function App() {
