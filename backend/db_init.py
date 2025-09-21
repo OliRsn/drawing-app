@@ -1,7 +1,8 @@
-from app.database import SessionLocal
+from app.database import SessionLocal, engine, Base
 from app import crud, schemas
 
 def init_db():
+    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     # Create a classroom
@@ -19,9 +20,7 @@ def init_db():
         student = crud.create_student(db, student=schemas.StudentCreate(name=name), classroom_id=classroom.id)
         students.append(student)
 
-    # Create 5 grades for 5 different students
-    for i in range(5):
-        crud.create_student_grade(db, grade=schemas.GradeCreate(grade=10 + i), student_id=students[i].id)
+
 
     # Create default settings
     crud.create_or_update_setting(db, setting=schemas.SettingCreate(key="numSlotMachines", value="4"))
