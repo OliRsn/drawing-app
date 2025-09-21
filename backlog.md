@@ -3,7 +3,7 @@ Backlog :
   - Seulement pour les validées
   - Avec la date
 - [Done] Dans l'ADMIN : mettre un paramètre pour le nombre de slotmachine par défaut
-- Ajouter liste des noms de la classe pour pouvoir supprimer des élèves avant un tirage 
+- [Done] Ajouter liste des noms de la classe pour pouvoir supprimer des élèves avant un tirage 
 - [Done] Pouvoir sélectionner les tirages individuellement
 - Revoir l'animation pour que les prénoms défilent moins vite ? 
 - Ajouter la possibilité d'avoir des probas pour différents exercices
