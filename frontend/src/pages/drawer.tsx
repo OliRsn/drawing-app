@@ -13,6 +13,8 @@ import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import { SlotMachine } from "@/components/SlotMachine";
 
+import { DrawingHistory } from "@/components/DrawingHistory";
+
 // === Types ===
 interface Student {
   id: number;
@@ -53,6 +55,7 @@ export function DrawerPage() {
   const [selectedToValidate, setSelectedToValidate] = useState<boolean[]>([]);
   const [isStudentSelectionOpen, setIsStudentSelectionOpen] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
 
   useEffect(() => {
     setSelectedToValidate(Array(drawnStudents.length).fill(true));
@@ -173,6 +176,7 @@ export function DrawerPage() {
           `${API_URL}/classrooms/${selectedClassroom.id}/students/probabilities`
         );
         setStudents(response.data);
+        setHistoryRefreshTrigger(Date.now()); // Trigger history refresh
       }
     } catch (error) {
       console.error("Error confirming draw:", error);
@@ -419,7 +423,8 @@ export function DrawerPage() {
           </CardBody>
         </Card>
 
-        
+        {selectedClassroom && <DrawingHistory classroomId={selectedClassroom.id} refreshTrigger={historyRefreshTrigger} />}
+
       </section>
     </DefaultLayout>
   );
