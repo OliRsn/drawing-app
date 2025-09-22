@@ -5,3 +5,4 @@ __pycache__/
 *.db
 backend.log
 /backend/data/
+**/__pycache__/
