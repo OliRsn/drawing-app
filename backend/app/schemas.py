@@ -64,3 +64,6 @@ class DrawingHistory(DrawingHistoryBase):
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat() + "Z"
+        }
