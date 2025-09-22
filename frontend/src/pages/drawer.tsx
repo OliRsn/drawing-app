@@ -68,9 +68,10 @@ export function DrawerPage() {
       try {
         // Fetch classrooms
         const classroomsResponse = await axios.get(`${API_URL}/classrooms/`);
-        setClassrooms(classroomsResponse.data);
-        if (classroomsResponse.data.length > 0) {
-          setSelectedClassroom(classroomsResponse.data[0]);
+        const sortedClassrooms = classroomsResponse.data.sort((a: Classroom, b: Classroom) => a.name.localeCompare(b.name));
+        setClassrooms(sortedClassrooms);
+        if (sortedClassrooms.length > 0) {
+          setSelectedClassroom(sortedClassrooms[0]);
         }
 
         // Fetch number of slot machines
