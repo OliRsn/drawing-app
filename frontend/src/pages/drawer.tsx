@@ -105,6 +105,9 @@ export function DrawerPage() {
           setStudents(fetchedStudents);
           setSelectedStudentIds(new Set(fetchedStudents.map(s => s.id)));
           setSlotMachineStudents(fetchedStudents);
+          setDrawnStudents(Array(numSlotMachines).fill(null));
+          setHasConfirmed(false);
+          setSpinId(0); // Reset spin animation trigger
         } catch (error) {
           console.error("Error fetching students:", error);
         }
@@ -112,7 +115,7 @@ export function DrawerPage() {
 
       fetchStudents();
     }
-  }, [selectedClassroom]);
+  }, [selectedClassroom, numSlotMachines]);
 
 
 
