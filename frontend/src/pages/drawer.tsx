@@ -14,6 +14,8 @@ import DefaultLayout from "@/layouts/default";
 import { SlotMachine } from "@/components/SlotMachine";
 
 import { DrawingHistory } from "@/components/DrawingHistory";
+import { StudentCard } from "@/components/StudentCard";
+import { RadioGroup, Radio } from "@heroui/radio";
 
 // === Types ===
 interface Student {
@@ -206,12 +208,17 @@ export function DrawerPage() {
       return valueB - valueA;
     });
 
-    if (displayMode === "weight") {
-      const maxWeight = Math.max(...sorted.map(s => s.weight), 0);
-      return sorted.map(student => ({ ...student, weight: (student.weight / maxWeight) * 100 }));
+    if (displayMode === "probability") {
+      const maxProb = Math.max(...sorted.map(s => s.probability || 0));
+      return sorted.map(student => ({
+        ...student,
+        scaledValue: maxProb > 0 ? ((student.probability || 0) / maxProb) * 75 : 0,
+      }));
     }
 
-    return sorted;
+    const maxWeight = Math.max(...sorted.map(s => s.weight), 0);
+    return sorted.map(student => ({ ...student, scaledValue: maxWeight > 0 ? (student.weight / maxWeight) * 100 : 0 }));
+
   }, [students, sortBy, displayMode]);
 
   return (
@@ -399,27 +406,23 @@ export function DrawerPage() {
               </div>
             </div>
           </CardHeader>
-          <CardBody className="space-y-4">
-            {sortedStudents.map((student) => {
-              const value = displayMode === "probability" ? (student.probability || 0) * 100 : student.weight;
-              const displayValue = displayMode === "probability" ? `${value.toFixed(1)}%` : `${student.weight.toFixed(0)}%`;
+          <CardBody>
+            <div className="grid grid-cols-4 gap-4">
+              {sortedStudents.map((student) => {
+                const isProb = displayMode === "probability";
+                const value = isProb ? student.probability || 0 : student.weight;
+                const displayValue = isProb ? `${(value * 100).toFixed(1)}%` : `${student.scaledValue.toFixed(0)}%`;
 
-              return (
-                <div key={student.id}>
-                  <div className="flex justify-between mb-1">
-                    <span>{student.name}</span>
-                    <span className="text-sm text-slate-500">
-                      {displayValue}
-                    </span>
-                  </div>
-                  <Progress
-                    value={value}
-                    color="secondary"
-                    className="h-2"
+                return (
+                  <StudentCard
+                    key={student.id}
+                    name={student.name}
+                    value={student.scaledValue}
+                    displayValue={displayValue}
                   />
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </CardBody>
         </Card>
 
