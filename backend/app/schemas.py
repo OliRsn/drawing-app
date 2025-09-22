@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
 class StudentBase(BaseModel):
     name: str
@@ -47,5 +48,19 @@ class SettingCreate(SettingBase):
     pass
 
 class Setting(SettingBase):
+    class Config:
+        from_attributes = True
+
+class DrawingHistoryBase(BaseModel):
+    drawn_students: List[dict]
+
+class DrawingHistoryCreate(DrawingHistoryBase):
+    pass
+
+class DrawingHistory(DrawingHistoryBase):
+    id: int
+    classroom_id: int
+    drawing_date: datetime
+
     class Config:
         from_attributes = True

@@ -105,12 +105,18 @@ def draw_students_for_classroom(
     draw_input: schemas.DrawCreate,
     db: Session = Depends(get_db)
 ):
-    return crud.get_drawn_students(
+    drawn_students = crud.get_drawn_students(
         db=db,
         classroom_id=classroom_id,
         num_students=draw_input.num_students,
         student_ids=draw_input.student_ids
     )
+    crud.create_drawing_history(db=db, classroom_id=classroom_id, drawn_students=drawn_students)
+    return drawn_students
+
+@app.get("/classrooms/{classroom_id}/drawing-history", response_model=list[schemas.DrawingHistory])
+def read_drawing_history(classroom_id: int, db: Session = Depends(get_db)):
+    return crud.get_drawing_history_by_classroom(db, classroom_id=classroom_id)
 
 @app.post("/students/draw_count", response_model=list[schemas.Student])
 def update_draw_count(

@@ -6,6 +6,6 @@ Backlog :
 - [Done] Ajouter liste des noms de la classe pour pouvoir supprimer des élèves avant un tirage 
 - [Done] Pouvoir sélectionner les tirages individuellement
 - Revoir l'animation pour que les prénoms défilent moins vite ? 
-- Ajouter la possibilité d'avoir des probas pour différents exercices
+- [To v2] Ajouter la possibilité d'avoir des probas pour différents exercices
   - Choisir la classe et l'exercice pour un tirage 
   - Dans admin choisir un exercice par défaut (Echauffement)

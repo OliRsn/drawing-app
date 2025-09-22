@@ -32,8 +32,29 @@ def reset_student_weights_in_classroom(db: Session, classroom_id: int):
     for student in students:
         student.weight = 1.0
         student.draw_count = 0
+    
+    # Delete drawing history for the classroom
+    db.query(models.DrawingHistory).filter(models.DrawingHistory.classroom_id == classroom_id).delete()
+
     db.commit()
-    return {"message": "Weights and draw counts reset successfully"}
+    return {"message": "Weights, draw counts, and drawing history reset successfully"}
+
+
+# Drawing History CRUD
+
+def create_drawing_history(db: Session, classroom_id: int, drawn_students: List[schemas.Student]):
+    drawn_students_data = [{'id': s.id, 'name': s.name} for s in drawn_students]
+    db_drawing_history = models.DrawingHistory(
+        classroom_id=classroom_id,
+        drawn_students=drawn_students_data
+    )
+    db.add(db_drawing_history)
+    db.commit()
+    db.refresh(db_drawing_history)
+    return db_drawing_history
+
+def get_drawing_history_by_classroom(db: Session, classroom_id: int):
+    return db.query(models.DrawingHistory).filter(models.DrawingHistory.classroom_id == classroom_id).order_by(models.DrawingHistory.drawing_date.desc()).all()
 
 
 # Student CRUD
@@ -71,14 +92,28 @@ def get_drawn_students(db: Session, classroom_id: int, num_students: int, studen
     if not students:
         return []
 
-    weights = [student.weight for student in students]
-    total_weight = sum(weights)
-    if total_weight == 0:
-        probabilities = [1/len(students)] * len(students)
-    else:
-        probabilities = [w / total_weight for w in weights]
+    # Ensure num_students is not greater than the number of available students
+    k = min(num_students, len(students))
 
-    drawn_students = random.choices(students, weights=probabilities, k=num_students)
+    weights = [student.weight for student in students]
+    
+    # Weighted sample without replacement
+    drawn_students = []
+    while len(drawn_students) < k:
+        total_weight = sum(weights)
+        if total_weight == 0:
+            # If all remaining weights are zero, choose uniformly
+            remaining_students = [s for s in students if s not in drawn_students]
+            if not remaining_students:
+                break
+            chosen = random.choice(remaining_students)
+        else:
+            probabilities = [w / total_weight for w in weights]
+            chosen = random.choices(students, weights=probabilities, k=1)[0]
+
+        drawn_students.append(chosen)
+        chosen_index = students.index(chosen)
+        weights[chosen_index] = 0 # Ensure it's not picked again
 
     return drawn_students
 
