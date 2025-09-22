@@ -105,15 +105,23 @@ export const SlotMachine = ({
               }}
               className="flex flex-row"
             >
-              {reel.map((student, index) => (
-                <div
-                  key={`${student.id}-${index}`}
-                  className="flex items-center justify-center"
-                  style={{ width: REEL_ITEM_WIDTH, flexShrink: 0 }}
-                >
-                  {student.name}
-                </div>
-              ))}
+              {reel.map((student, index) => {
+                const nameLength = student.name.length;
+                let fontSizeClass = "text-2xl";
+                if (nameLength > 9) fontSizeClass = "text-xl";
+                if (nameLength > 12) fontSizeClass = "text-lg";
+                if (nameLength > 15) fontSizeClass = "text-base";
+
+                return (
+                  <div
+                    key={`${student.id}-${index}`}
+                    className={`flex items-center justify-center whitespace-nowrap ${fontSizeClass}`}
+                    style={{ width: REEL_ITEM_WIDTH, flexShrink: 0 }}
+                  >
+                    {student.name}
+                  </div>
+                );
+              })}
             </motion.div>
           </div>
         </CardBody>

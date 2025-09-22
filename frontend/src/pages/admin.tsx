@@ -44,7 +44,8 @@ export default function AdminPage() {
     setIsLoading(true);
     try {
       const response = await axios.get(`${API_URL}/classrooms/`);
-      setClassrooms(response.data);
+      const sortedClassrooms = response.data.sort((a: Classroom, b: Classroom) => a.name.localeCompare(b.name));
+      setClassrooms(sortedClassrooms);
     } catch (error) {
       console.error("Error fetching classrooms:", error);
     } finally {
