@@ -19,7 +19,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const formatToNearestMinute = (dateString: string) => {
   const date = new Date(dateString);
   date.setSeconds(0, 0);
-  return date.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleString('fr-FR', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
 };
 
 export const DrawingHistory = ({ classroomId, refreshTrigger }: DrawingHistoryProps) => {

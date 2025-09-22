@@ -1,5 +1,5 @@
 Backlog : 
-- Sauvegarder l'historique des élèves tirés au sort :
+- [Done] Sauvegarder l'historique des élèves tirés au sort :
   - Seulement pour les validées
   - Avec la date
 - [Done] Dans l'ADMIN : mettre un paramètre pour le nombre de slotmachine par défaut
