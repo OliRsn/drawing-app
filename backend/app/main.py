@@ -94,21 +94,6 @@ def update_student(
     return db_student
 
 
-@app.post("/students/{student_id}/grades/", response_model=schemas.Grade)
-def create_grade_for_student(
-    student_id: int, grade: schemas.GradeCreate, db: Session = Depends(get_db)
-):
-    return crud.create_student_grade(db=db, grade=grade, student_id=student_id)
-
-
-@app.delete("/grades/{grade_id}", response_model=schemas.Grade)
-def delete_grade(grade_id: int, db: Session = Depends(get_db)):
-    db_grade = crud.delete_grade(db, grade_id=grade_id)
-    if db_grade is None:
-        raise HTTPException(status_code=404, detail="Grade not found")
-    return db_grade
-
-
 @app.get("/classrooms/{classroom_id}/students/probabilities", response_model=list[schemas.Student])
 def read_student_probabilities(classroom_id: int, db: Session = Depends(get_db)):
     students = crud.get_students_with_probabilities_by_classroom(db, classroom_id=classroom_id)

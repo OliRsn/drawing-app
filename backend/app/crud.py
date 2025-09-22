@@ -116,22 +116,6 @@ def delete_student(db: Session, student_id: int):
         db.commit()
     return db_student
 
-# Grade CRUD
-
-def create_student_grade(db: Session, grade: schemas.GradeCreate, student_id: int):
-    db_grade = models.Grade(**grade.dict(), student_id=student_id)
-    db.add(db_grade)
-    db.commit()
-    db.refresh(db_grade)
-    return db_grade
-
-def delete_grade(db: Session, grade_id: int):
-    db_grade = db.query(models.Grade).filter(models.Grade.id == grade_id).first()
-    if db_grade:
-        db.delete(db_grade)
-        db.commit()
-    return db_grade
-
 # Settings CRUD
 
 def get_setting(db: Session, key: str):
