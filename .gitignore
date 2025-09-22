@@ -4,3 +4,4 @@ __pycache__/
 # Database files
 *.db
 backend.log
+/backend/data/
