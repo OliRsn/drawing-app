@@ -6,7 +6,6 @@ interface Student {
   id: number;
   name: string;
   pastDraws: number;
-  lastGrade: number;
 }
 
 interface DrawnStudentCardProps {

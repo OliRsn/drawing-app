@@ -1,19 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-class GradeBase(BaseModel):
-    grade: float
-
-class GradeCreate(GradeBase):
-    pass
-
-class Grade(GradeBase):
-    id: int
-    student_id: int
-
-    class Config:
-        from_attributes = True
-
 class StudentBase(BaseModel):
     name: str
     weight: Optional[float] = 1.0
@@ -28,7 +15,6 @@ class Student(StudentBase):
     weight: float
     draw_count: int
     probability: Optional[float] = None
-    grades: List[Grade] = []
 
     class Config:
         from_attributes = True

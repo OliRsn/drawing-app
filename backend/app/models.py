@@ -21,16 +21,6 @@ class Student(Base):
     classroom_id = Column(Integer, ForeignKey("classrooms.id", ondelete="CASCADE"))
 
     classroom = relationship("Classroom", back_populates="students")
-    grades = relationship("Grade", back_populates="student", cascade="all, delete-orphan")
-
-class Grade(Base):
-    __tablename__ = "grades"
-
-    id = Column(Integer, primary_key=True, index=True)
-    grade = Column(Float)
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"))
-
-    student = relationship("Student", back_populates="grades")
 
 class Setting(Base):
     __tablename__ = "settings"
