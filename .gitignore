@@ -39,3 +39,9 @@ lerna-debug.log*
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Swap files
+*.swp
+
+# Backlog
+backlog.md
