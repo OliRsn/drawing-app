@@ -65,7 +65,7 @@ const GlobalSettings = () => {
             {isEditing ? (
                 <Select
                   selectedKeys={new Set([tempNumSlotMachines])}
-                  onSelectionChange={(keys) => setTempNumSlotMachines(keys.values().next().value)}
+                  onSelectionChange={(keys) => setTempNumSlotMachines(Array.from(keys)[0] as string)}
                 >
                   <SelectItem key="1">1</SelectItem>
                   <SelectItem key="2">2</SelectItem>
