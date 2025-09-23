@@ -12,7 +12,7 @@ def init_db():
 
     db = SessionLocal()
 
-    data_dir = os.path.join(os.path.dirname(__file__), "data")
+    data_dir = os.path.join(os.path.dirname(__file__), "../data/class_data")
 
     for filename in os.listdir(data_dir):
         if filename.endswith(".csv"):
