@@ -2,7 +2,6 @@ import { Select, SelectItem } from "@heroui/select";
 import { useState, useMemo, useEffect } from "react";
 import { Button, ButtonGroup } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Progress } from "@heroui/progress";
 import { Spinner } from "@heroui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PlusIcon, ChartBarIcon, AdjustmentsHorizontalIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
@@ -15,7 +14,6 @@ import { SlotMachine } from "@/components/SlotMachine";
 
 import { DrawingHistory } from "@/components/DrawingHistory";
 import { StudentCard } from "@/components/StudentCard";
-import { RadioGroup, Radio } from "@heroui/radio";
 
 // === Types ===
 interface Student {
@@ -48,7 +46,6 @@ export function DrawerPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [spinId, setSpinId] = useState(0);
-  const [numToDraw, setNumToDraw] = useState(1);
   const [displayMode, setDisplayMode] = useState<"probability" | "weight">(
     "probability"
   );
@@ -237,13 +234,13 @@ export function DrawerPage() {
             label="Sélectionner une classe"
             selectedKeys={selectedClassroom ? [selectedClassroom.id.toString()] : []}
             onSelectionChange={(keys) => {
-              const key = Array.from(keys)[0];
+              const key = Array.from(keys)[0] as string;
               const classroom = classrooms.find((c) => c.id === parseInt(key));
               setSelectedClassroom(classroom || null);
             }}
           >
             {classrooms.map((classroom) => (
-              <SelectItem key={classroom.id} value={classroom.id}>
+              <SelectItem key={classroom.id}>
                 {classroom.name}
               </SelectItem>
             ))}
