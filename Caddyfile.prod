@@ -1,4 +1,4 @@
-monapp.fr {
+http://51.254.205.150 {
     encode gzip
 
     handle_path /api/* {
