@@ -1,0 +1,36 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - env/prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.VPS_KEY }}
+
+      - name: Sync repository to VPS (exclude DB and env)
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p ~/drawing-app"
+          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT }}" \
+            --exclude 'data/' \
+            --exclude '.env' \
+            ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/drawing-app/
+
+      - name: Deploy with Docker Compose (prod)
+        run: |
+          ssh -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            cd ~/drawing-app &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+          "
