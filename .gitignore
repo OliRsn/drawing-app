@@ -8,7 +8,7 @@ backend.log
 **/__pycache__/
 
 # Data files
-data/class_data/
+data/
 
 # Node dependencies
 node_modules/
