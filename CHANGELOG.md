@@ -8,20 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.1] - 2025-09-24
 
 ### Added
-- Surcharge docker compose for prod + github deploy action workflow
-- Track package-lock.json
 
-### Fixed
-- Fix prod caddy file
+- **CI/CD:** Implemented a GitHub Actions workflow for continuous deployment to a Virtual Private Server (VPS). This automates the process of deploying the application to the production environment.
+- **Production Docker Configuration:** Introduced a `docker-compose.prod.yml` to manage production-specific configurations, starting with the Caddy reverse proxy.
 
-### Chore
-- Untrack data directory
-- Add root .env file
-- allow .env file to be tracked
-- ignore class data
+### Changed
 
-### Docs
-- Update CHANGELOG for v1.1.0
+- **Versioning:** The `package-lock.json` file for the frontend is now tracked by Git to ensure deterministic dependency installation.
+- **Configuration:** The main `.env` file is now tracked by Git.
+- **Production Environment:** The production Caddy configuration (`Caddyfile.prod`) has been updated to use a direct IP address and a new path handling strategy for the backend API.
+- **Docker Configuration:** Removed the `env_file` directive from the `docker-compose.yml` for the backend service.
+
+### Removed
+
+- **Versioned Data:** The `data` directory, containing class CSV files, is no longer tracked by Git. This prevents sensitive or large data files from being stored in the repository.
 
 ## [1.1.0] - 2025-09-23
 
