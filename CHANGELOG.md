@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-09-26
+
+### Changed
+- **UI:** The "Add Student" and "Remove Student" buttons have been moved to the header of the draw panel for a more intuitive and streamlined user experience. The button text has been replaced with icons for a cleaner and more compact interface.
+
+### Fixed
+- **Drawing History:** Fixed a critical bug where students who were deselected from a draw were still being recorded in the drawing history and having their `draw_count` incremented. The backend logic has been refactored to only create the `DrawingHistory` entry after the user confirms the draw, ensuring data accuracy.
+
 ## [1.1.1] - 2025-09-24
 
 ### Added
