@@ -4,7 +4,7 @@ import { Button, ButtonGroup } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Spinner } from "@heroui/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { PlusIcon, ChartBarIcon, AdjustmentsHorizontalIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, MinusIcon, ChartBarIcon, AdjustmentsHorizontalIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { Switch } from "@heroui/switch";
 import axios from "axios";
 
@@ -157,7 +157,7 @@ export function DrawerPage() {
   }
 
   async function handleConfirmDraw() {
-    if (!drawnStudents.length || !drawnStudents[0]) return;
+    if (!drawnStudents.length || !drawnStudents[0] || !selectedClassroom) return;
 
     setIsConfirming(true);
     const student_ids = drawnStudents
@@ -170,7 +170,7 @@ export function DrawerPage() {
     }
 
     try {
-      await axios.post(`${API_URL}/students/draw_count`, { student_ids });
+      await axios.post(`${API_URL}/classrooms/${selectedClassroom.id}/confirm_draw`, { student_ids });
       setHasConfirmed(true);
 
       // Refetch students to update probabilities
@@ -285,9 +285,27 @@ export function DrawerPage() {
         <Card className="mb-6">
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Tirage</h2>
-            <Button color="primary" onPress={handleDraw} disabled={isDrawing}>
-              Lancer le tirage
-            </Button>
+            <div className="flex items-center gap-4">
+              <ButtonGroup>
+                <Button
+                  color="primary"
+                  onPress={addSlotMachine}
+                  disabled={isDrawing}
+                >
+                  <PlusIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  color="danger"
+                  onPress={removeSlotMachine}
+                  disabled={isDrawing || drawnStudents.length <= 1}
+                >
+                  <MinusIcon className="w-4 h-4" />
+                </Button>
+              </ButtonGroup>
+              <Button color="primary" onPress={handleDraw} disabled={isDrawing}>
+                Lancer le tirage
+              </Button>
+            </div>
           </CardHeader>
           <CardBody className="flex flex-col gap-4">
             <AnimatePresence>
@@ -323,27 +341,8 @@ export function DrawerPage() {
             <div className="flex justify-between items-center gap-4 mt-4">
               <div className="flex-1" />
               <div className="flex-1 flex justify-center">
-                {isDrawing ? (
+                {isDrawing && (
                   <Spinner size="lg" />
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <Button
-                      color="primary"
-                      onPress={addSlotMachine}
-                      disabled={isDrawing}
-                    >
-                      <PlusIcon className="w-4 h-4 mr-2" />
-                      Ajouter un étudiant
-                    </Button>
-                    <Button
-                      variant="light"
-                      color="danger"
-                      onPress={removeSlotMachine}
-                      disabled={isDrawing || drawnStudents.length <= 1}
-                    >
-                      Enlever un étudiant
-                    </Button>
-                  </div>
                 )}
               </div>
               <div className="flex-1 flex justify-end">
