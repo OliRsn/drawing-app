@@ -9,12 +9,9 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import os
-from dotenv import load_dotenv
 
-from . import crud, models, schemas
+from . import crud, models
 from .database import SessionLocal
-
-load_dotenv()
 
 
 SECRET_KEY = os.getenv("SECRET_KEY")
