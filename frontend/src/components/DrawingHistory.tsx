@@ -2,6 +2,7 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { useEffect, useState } from "react";
 import { Button } from "@heroui/button";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import api from "@/lib/api";
 
 interface DrawingHistory {
   id: number;
@@ -13,8 +14,6 @@ interface DrawingHistoryProps {
   classroomId: number;
   refreshTrigger: number;
 }
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const formatToNearestMinute = (dateString: string) => {
   const date = new Date(dateString);
@@ -28,10 +27,9 @@ export const DrawingHistory = ({ classroomId, refreshTrigger }: DrawingHistoryPr
 
   useEffect(() => {
     if (classroomId) {
-      fetch(`${API_URL}/classrooms/${classroomId}/drawing-history`)
-        .then((res) => res.json())
-        .then((data) => {
-          setHistory(data);
+      api.get(`/classrooms/${classroomId}/drawing-history`)
+        .then((res) => {
+          setHistory(res.data);
         })
         .catch(error => console.error("Error fetching history:", error));
     }

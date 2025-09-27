@@ -3,9 +3,7 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Select, SelectItem } from "@heroui/select";
 import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/react";
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import api from "@/lib/api";
 
 const GlobalSettings = () => {
   const [numSlotMachines, setNumSlotMachines] = useState("3");
@@ -16,11 +14,12 @@ const GlobalSettings = () => {
   useEffect(() => {
     const fetchNumSlotMachines = async () => {
       try {
-        const response = await axios.get(`${API_URL}/settings/numSlotMachines`);
+        const response = await api.get(`/settings/numSlotMachines`);
         setNumSlotMachines(response.data.value);
         setTempNumSlotMachines(response.data.value);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
+        // @ts-ignore
+        if (error.response && error.response.status === 404) {
           // If setting not found, create it with default value
           await handleSave();
         } else {
@@ -35,7 +34,7 @@ const GlobalSettings = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await axios.put(`${API_URL}/settings/`, {
+      await api.put(`/settings/`, {
         key: "numSlotMachines",
         value: tempNumSlotMachines,
       });

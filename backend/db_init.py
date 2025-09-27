@@ -51,6 +51,12 @@ def init_db():
     # Create default settings if they don't exist
     crud.create_or_update_setting(db, setting=schemas.SettingCreate(key="numSlotMachines", value="4"))
 
+    # Create a default admin user if it doesn't exist
+    user = crud.get_user_by_username(db, username="admin")
+    if not user:
+        user_in = schemas.UserCreate(username="admin", password="admin", is_admin=True)
+        crud.create_user(db, user=user_in)
+
     db.close()
 
 if __name__ == "__main__":

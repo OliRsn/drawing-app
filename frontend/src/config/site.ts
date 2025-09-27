@@ -8,10 +8,6 @@ export const siteConfig = {
       label: "Tirage", 
       href: "/",
     },
-    {
-      label: "Admin",
-      href: "/admin",
-    },
   ],
   navMenuItems: [
     {

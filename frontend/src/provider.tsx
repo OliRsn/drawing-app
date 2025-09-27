@@ -9,12 +9,14 @@ declare module "@react-types/shared" {
   }
 }
 
+import { AuthProvider } from '@/contexts/AuthContext';
+
 export function Provider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
-      {children}
+      <AuthProvider>{children}</AuthProvider>
     </HeroUIProvider>
   );
 }

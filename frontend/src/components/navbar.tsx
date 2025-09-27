@@ -5,11 +5,22 @@ import {
   NavbarContent,
   NavbarItem,
 } from "@heroui/navbar";
+import { Button } from "@heroui/button";
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { Logo } from "@/components/icons";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
@@ -42,6 +53,33 @@ export const Navbar = () => {
         <NavbarItem>
           <ThemeSwitch />
         </NavbarItem>
+        {isAuthenticated ? (
+          <>
+            {user?.is_admin && (
+              <NavbarItem>
+                <Button as={Link} color="primary" href="/admin" variant="flat">
+                  Admin
+                </Button>
+              </NavbarItem>
+            )}
+            <NavbarItem>
+              <Button as={Link} color="secondary" href="/profile" variant="flat">
+                Profile
+              </Button>
+            </NavbarItem>
+            <NavbarItem>
+              <Button color="danger" variant="flat" onPress={handleLogout}>
+                Logout
+              </Button>
+            </NavbarItem>
+          </>
+        ) : (
+          <NavbarItem>
+            <Button as={Link} color="primary" href="/login" variant="flat">
+              Login
+            </Button>
+          </NavbarItem>
+        )}
       </NavbarContent>
     </HeroUINavbar>
   );

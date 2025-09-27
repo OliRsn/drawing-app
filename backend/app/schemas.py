@@ -67,3 +67,27 @@ class DrawingHistory(DrawingHistoryBase):
         json_encoders = {
             datetime: lambda dt: dt.isoformat() + "Z"
         }
+
+class UserBase(BaseModel):
+    username: str
+
+class UserCreate(UserBase):
+    password: str
+    is_admin: bool = False
+
+class User(UserBase):
+    id: int
+    is_admin: bool
+
+    class Config:
+        from_attributes = True
+
+class UserInDB(User):
+    password_hash: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None

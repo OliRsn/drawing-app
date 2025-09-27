@@ -4,7 +4,7 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 
 import { Spinner, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
-import axios from "axios";
+import api from "@/lib/api";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -24,8 +24,6 @@ interface Classroom {
   students: Student[];
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 // === Component ===
 export default function AdminPage() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
@@ -43,7 +41,7 @@ export default function AdminPage() {
   async function fetchClassrooms() {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/classrooms/`);
+      const response = await api.get(`/classrooms/`);
       const sortedClassrooms = response.data.sort((a: Classroom, b: Classroom) => a.name.localeCompare(b.name));
       setClassrooms(sortedClassrooms);
     } catch (error) {
@@ -57,7 +55,7 @@ export default function AdminPage() {
     if (!newClassName) return;
 
     try {
-      await axios.post(`${API_URL}/classrooms/`, { name: newClassName });
+      await api.post(`/classrooms/`, { name: newClassName });
       setNewClassName("");
       fetchClassrooms();
     } catch (error) {
@@ -67,7 +65,7 @@ export default function AdminPage() {
 
   async function handleDeleteClassroom(classroomId: number) {
     try {
-      await axios.delete(`${API_URL}/classrooms/${classroomId}`);
+      await api.delete(`/classrooms/${classroomId}`);
       fetchClassrooms();
       setSelectedClassroom(null);
     } catch (error) {
@@ -77,7 +75,7 @@ export default function AdminPage() {
 
   async function fetchStudents(classroomId: number) {
     try {
-      const response = await axios.get(`${API_URL}/classrooms/${classroomId}`);
+      const response = await api.get(`/classrooms/${classroomId}`);
       setSelectedClassroom(response.data);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -88,7 +86,7 @@ export default function AdminPage() {
     if (!newStudentName || !selectedClassroom) return;
 
     try {
-      await axios.post(`${API_URL}/classrooms/${selectedClassroom.id}/students/`, { name: newStudentName, weight: 1, draw_count: 0 });
+      await api.post(`/classrooms/${selectedClassroom.id}/students/`, { name: newStudentName, weight: 1, draw_count: 0 });
       setNewStudentName("");
       fetchStudents(selectedClassroom.id);
     } catch (error) {
@@ -100,7 +98,7 @@ export default function AdminPage() {
     if (!selectedClassroom) return;
 
     try {
-      await axios.put(`${API_URL}/students/${student.id}`, { name: student.name, weight: student.weight, draw_count: student.draw_count });
+      await api.put(`/students/${student.id}`, { name: student.name, weight: student.weight, draw_count: student.draw_count });
       setEditingStudent(null);
       fetchStudents(selectedClassroom.id);
     } catch (error) {
@@ -112,7 +110,7 @@ export default function AdminPage() {
     if (!selectedClassroom) return;
 
     try {
-      await axios.delete(`${API_URL}/students/${studentId}`);
+      await api.delete(`/students/${studentId}`);
       fetchStudents(selectedClassroom.id);
     } catch (error) {
       console.error("Error deleting student:", error);
@@ -123,7 +121,7 @@ export default function AdminPage() {
     if (!selectedClassroom) return;
 
     try {
-      await axios.post(`${API_URL}/classrooms/${selectedClassroom.id}/reset-weights`);
+      await api.post(`/classrooms/${selectedClassroom.id}/reset-weights`);
       fetchStudents(selectedClassroom.id);
     } catch (error) {
       console.error("Error resetting weights:", error);

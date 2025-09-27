@@ -6,7 +6,8 @@ import { Spinner } from "@heroui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PlusIcon, MinusIcon, ChartBarIcon, AdjustmentsHorizontalIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { Switch } from "@heroui/switch";
-import axios from "axios";
+import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -30,12 +31,9 @@ interface Classroom {
   students: Student[];
 }
 
-
-
-const API_URL = import.meta.env.VITE_API_URL;
-
 // === Component ===
 export function DrawerPage() {
+  const { isAuthenticated, loading } = useAuth();
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
@@ -61,43 +59,43 @@ export function DrawerPage() {
   }, [drawnStudents]);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        // Fetch classrooms
-        const classroomsResponse = await axios.get(`${API_URL}/classrooms/`);
-        const sortedClassrooms = classroomsResponse.data.sort((a: Classroom, b: Classroom) => a.name.localeCompare(b.name));
-        setClassrooms(sortedClassrooms);
-        if (sortedClassrooms.length > 0) {
-          setSelectedClassroom(sortedClassrooms[0]);
-        }
-
-        // Fetch number of slot machines
+    if (isAuthenticated) {
+      const fetchInitialData = async () => {
         try {
-          const numSlotMachinesResponse = await axios.get(`${API_URL}/settings/numSlotMachines`);
-          const num = parseInt(numSlotMachinesResponse.data.value, 10);
-          setNumSlotMachines(num);
-          setDrawnStudents(Array(num).fill(null));
-        } catch (error) {
-          if (axios.isAxiosError(error) && error.response?.status === 404) {
+          // Fetch classrooms
+          const classroomsResponse = await api.get(`/classrooms/`);
+          const sortedClassrooms = classroomsResponse.data.sort((a: Classroom, b: Classroom) => a.name.localeCompare(b.name));
+          setClassrooms(sortedClassrooms);
+          if (sortedClassrooms.length > 0) {
+            setSelectedClassroom(sortedClassrooms[0]);
+          }
+
+          // Fetch number of slot machines
+          try {
+            const numSlotMachinesResponse = await api.get(`/settings/numSlotMachines`);
+            const num = parseInt(numSlotMachinesResponse.data.value, 10);
+            setNumSlotMachines(num);
+            setDrawnStudents(Array(num).fill(null));
+          } catch (error) {
             // Setting not found, use default
             setDrawnStudents(Array(3).fill(null));
           }
+
+        } catch (error) {
+          console.error("Error fetching initial data:", error);
         }
+      };
 
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
-      }
-    };
-
-    fetchInitialData();
-  }, []);
+      fetchInitialData();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (selectedClassroom) {
+    if (selectedClassroom && isAuthenticated) {
       const fetchStudents = async () => {
         try {
-          const response = await axios.get(
-            `${API_URL}/classrooms/${selectedClassroom.id}/students/probabilities`
+          const response = await api.get(
+            `/classrooms/${selectedClassroom.id}/students/probabilities`
           );
           const fetchedStudents: Student[] = response.data;
           setStudents(fetchedStudents);
@@ -113,7 +111,7 @@ export function DrawerPage() {
 
       fetchStudents();
     }
-  }, [selectedClassroom, numSlotMachines]);
+  }, [selectedClassroom, numSlotMachines, isAuthenticated]);
 
 
 
@@ -136,8 +134,8 @@ export function DrawerPage() {
     const student_ids = Array.from(selectedStudentIds);
     setSlotMachineStudents(students.filter(s => selectedStudentIds.has(s.id)));
     try {
-      const response = await axios.post(
-        `${API_URL}/classrooms/${selectedClassroom.id}/draw`,
+      const response = await api.post(
+        `/classrooms/${selectedClassroom.id}/draw`,
         {
           num_students: drawnStudents.length,
           student_ids: student_ids,
@@ -170,13 +168,13 @@ export function DrawerPage() {
     }
 
     try {
-      await axios.post(`${API_URL}/classrooms/${selectedClassroom.id}/confirm_draw`, { student_ids });
+      await api.post(`/classrooms/${selectedClassroom.id}/confirm_draw`, { student_ids });
       setHasConfirmed(true);
 
       // Refetch students to update probabilities
       if (selectedClassroom) {
-        const response = await axios.get(
-          `${API_URL}/classrooms/${selectedClassroom.id}/students/probabilities`
+        const response = await api.get(
+          `/classrooms/${selectedClassroom.id}/students/probabilities`
         );
         setStudents(response.data);
         setHistoryRefreshTrigger(Date.now()); // Trigger history refresh
@@ -221,6 +219,30 @@ export function DrawerPage() {
     return sorted.map(student => ({ ...student, scaledValue: maxWeight > 0 ? (student.weight / maxWeight) * 100 : 0 }));
 
   }, [students, sortBy, displayMode]);
+
+  if (loading) {
+    return (
+      <DefaultLayout>
+        <div className="flex justify-center items-center h-full">
+          <Spinner size="lg" />
+        </div>
+      </DefaultLayout>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <DefaultLayout>
+        <div className="flex justify-center items-center h-full">
+          <Card>
+            <CardBody>
+              <p>Please log in to use the application.</p>
+            </CardBody>
+          </Card>
+        </div>
+      </DefaultLayout>
+    );
+  }
 
   return (
     <DefaultLayout>
