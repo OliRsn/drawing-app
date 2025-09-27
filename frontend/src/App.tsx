@@ -24,8 +24,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<DrawerPage />} />
       <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<DrawerPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
