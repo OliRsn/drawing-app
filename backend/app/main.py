@@ -49,6 +49,22 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 async def read_users_me(current_user: models.User = Depends(auth.get_current_active_user)):
     return current_user
 
+@app.put("/me/password")
+def update_password(
+    password_update: schemas.PasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    updated_user = crud.update_user_password(
+        db,
+        user=current_user,
+        current_password=password_update.current_password,
+        new_password=password_update.new_password
+    )
+    if not updated_user:
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    return {"message": "Password updated successfully"}
+
 
 @app.post("/classrooms/", response_model=schemas.Classroom)
 def create_classroom(classroom: schemas.ClassroomCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):

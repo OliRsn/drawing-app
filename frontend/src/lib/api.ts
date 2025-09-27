@@ -18,4 +18,8 @@ api.interceptors.response.use(
   }
 );
 
+export const updatePassword = (current_password: string, new_password: string) => {
+  return api.put('/me/password', { current_password, new_password });
+};
+
 export default api;

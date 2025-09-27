@@ -180,3 +180,19 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def update_user_password(db: Session, user: models.User, current_password: str, new_password: str):
+    from .auth import verify_password, get_password_hash
+
+    db_user = db.query(models.User).filter(models.User.id == user.id).first()
+    if not db_user:
+        return None
+
+    if not verify_password(current_password, db_user.password_hash):
+        return None
+        
+    hashed_password = get_password_hash(new_password)
+    db_user.password_hash = hashed_password
+    db.commit()
+    db.refresh(db_user)
+    return db_user

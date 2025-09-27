@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError('');
     try {
       await login(username, password);
-      navigate('/profile');
+      navigate('/');
     } catch (err) {
       setError('Échec de la connexion. Veuillez vérifier vos identifiants.');
     }
