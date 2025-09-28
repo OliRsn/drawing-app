@@ -1,7 +1,14 @@
-www.luckystudent.cloud, luckystudent.cloud {
+www.luckystudent.cloud {
+    redir https://luckystudent.cloud{uri}
+}
+
+luckystudent.cloud {
     encode gzip
 
-    handle_path /api/* {
+    @api {
+        path /api/*
+    }
+    handle @api {
         reverse_proxy backend:8000
     }
 
@@ -9,6 +16,7 @@ www.luckystudent.cloud, luckystudent.cloud {
         reverse_proxy frontend:80
     }
 
+    # Sécurité navigateur (optionnel mais recommandé)
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
@@ -17,4 +25,3 @@ www.luckystudent.cloud, luckystudent.cloud {
         Permissions-Policy "geolocation=(), microphone=(), camera=()"
     }
 }
-
