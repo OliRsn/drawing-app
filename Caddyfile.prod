@@ -1,4 +1,4 @@
-http://51.254.205.150 {
+www.luckystudent.cloud, luckystudent.cloud {
     encode gzip
 
     handle_path /api/* {
@@ -7,6 +7,14 @@ http://51.254.205.150 {
 
     handle {
         reverse_proxy frontend:80
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
     }
 }
 
