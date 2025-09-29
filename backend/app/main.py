@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
 from . import crud, models, schemas, auth
-from .database import SessionLocal, engine
+from .database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -28,13 +28,7 @@ app.add_middleware(
 )
 
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
 
 @app.post("/token", response_model=schemas.Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -62,14 +56,18 @@ def update_password(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_active_user)
 ):
-    updated_user = crud.update_user_password(
+    if not auth.verify_password(password_update.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+
+    new_password_hash = auth.get_password_hash(password_update.new_password)
+    updated_user = crud.update_user_password_hash(
         db,
         user=current_user,
-        current_password=password_update.current_password,
-        new_password=password_update.new_password
+        new_password_hash=new_password_hash
     )
     if not updated_user:
-        raise HTTPException(status_code=400, detail="Incorrect current password")
+        # This case should ideally not be hit if the user is authenticated
+        raise HTTPException(status_code=404, detail="User not found")
     return {"message": "Password updated successfully"}
 
 

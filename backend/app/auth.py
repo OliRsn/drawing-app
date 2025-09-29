@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 import os
 
 from . import crud, models
-from .database import SessionLocal
+from .database import get_db
 
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -46,12 +46,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
 
 
 def get_user(db: Session, username: str):

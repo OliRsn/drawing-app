@@ -3,7 +3,7 @@ import csv
 from collections import defaultdict
 
 from app.database import SessionLocal, engine, Base
-from app import crud, schemas
+from app import crud, schemas, auth
 
 def init_db():
     # Truncate all tables
@@ -55,7 +55,8 @@ def init_db():
     user = crud.get_user_by_username(db, username="admin")
     if not user:
         user_in = schemas.UserCreate(username="admin", password="admin", is_admin=True)
-        crud.create_user(db, user=user_in)
+        hashed_password = auth.get_password_hash(user_in.password)
+        crud.create_user(db, user=user_in, hashed_password=hashed_password)
 
     db.close()
 

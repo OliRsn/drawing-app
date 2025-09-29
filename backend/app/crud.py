@@ -172,27 +172,19 @@ def create_or_update_setting(db: Session, setting: schemas.SettingCreate):
 def get_user_by_username(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
-def create_user(db: Session, user: schemas.UserCreate):
-    from .auth import get_password_hash
-    hashed_password = get_password_hash(user.password)
+def create_user(db: Session, user: schemas.UserCreate, hashed_password: str):
     db_user = models.User(username=user.username, password_hash=hashed_password, is_admin=user.is_admin)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
 
-def update_user_password(db: Session, user: models.User, current_password: str, new_password: str):
-    from .auth import verify_password, get_password_hash
-
+def update_user_password_hash(db: Session, user: models.User, new_password_hash: str):
     db_user = db.query(models.User).filter(models.User.id == user.id).first()
     if not db_user:
         return None
 
-    if not verify_password(current_password, db_user.password_hash):
-        return None
-        
-    hashed_password = get_password_hash(new_password)
-    db_user.password_hash = hashed_password
+    db_user.password_hash = new_password_hash
     db.commit()
     db.refresh(db_user)
     return db_user
