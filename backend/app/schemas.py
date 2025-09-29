@@ -95,3 +95,7 @@ class TokenData(BaseModel):
 class PasswordUpdate(BaseModel):
     current_password: str
     new_password: str
+
+class Message(BaseModel):
+    message: str
+
