@@ -18,6 +18,7 @@ interface SlotMachineProps {
 }
 
 const REEL_ITEM_WIDTH = 150;
+const NUM_REPEATS = 20;
 
 export const SlotMachine = ({
   students,
@@ -29,11 +30,10 @@ export const SlotMachine = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Build reel items with repetitions
-  const reel = useMemo(() => {
+  const reel = useMemo<Student[]>(() => {
     let reelItems: Student[] = [];
-    const numRepeats = 20;
 
-    for (let i = 0; i < numRepeats; i++) {
+    for (let i = 0; i < NUM_REPEATS; i++) {
       const shuffled = [...students].sort(() => Math.random() - 0.5);
       reelItems = reelItems.concat(shuffled);
     }
@@ -105,7 +105,7 @@ export const SlotMachine = ({
               }}
               className="flex flex-row"
             >
-              {reel.map((student, index) => {
+              {reel.map((student: Student, index: number) => {
                 const nameLength = student.name.length;
                 let fontSizeClass = "text-2xl";
                 if (nameLength > 9) fontSizeClass = "text-xl";

@@ -4,6 +4,7 @@ import { Select, SelectItem } from "@heroui/select";
 import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/react";
 import api from "@/lib/api";
+import { isAxiosError } from "axios";
 
 const GlobalSettings = () => {
   const [numSlotMachines, setNumSlotMachines] = useState("3");
@@ -18,8 +19,7 @@ const GlobalSettings = () => {
         setNumSlotMachines(response.data.value);
         setTempNumSlotMachines(response.data.value);
       } catch (error) {
-        // @ts-ignore
-        if (error.response && error.response.status === 404) {
+        if (isAxiosError(error) && error.response && error.response.status === 404) {
           // If setting not found, create it with default value
           await handleSave();
         } else {
