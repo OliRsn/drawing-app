@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-09-29
+
+### Changed
+
+- **Backend Refactoring:** Overhauled the backend structure by separating business logic from the CRUD layer into a dedicated service module (`services/drawing_service.py`). This improves separation of concerns and maintainability.
+- **Frontend Refactoring:** Refactored frontend data-fetching logic into custom hooks (`useClassrooms`, `useClassroom`) to simplify components and remove scattered `useEffect` calls.
+- **Atomic Transactions:** Backend operations that involve multiple database steps (e.g., confirming a draw) are now wrapped in atomic transactions to ensure data integrity.
+
+### Added
+
+- **Admin-Only Routes:** Added a new authorization dependency to protect sensitive backend endpoints (e.g., resetting a classroom), restricting them to admin users.
+- **Input Validation:** The drawing endpoint now validates that all selected student IDs belong to the specified classroom, preventing invalid data submissions.
+
+### Fixed
+
+- **Backend Import Error:** Corrected a `ModuleNotFoundError` for `CORSMiddleware` that was introduced during refactoring.
+- **Frontend Build Errors:** Resolved multiple TypeScript compilation errors in the frontend related to variable declarations, unused variables, and incorrect hook dependencies.
+
 ## [1.2.0] - 2025-09-27
 
 ### Added
