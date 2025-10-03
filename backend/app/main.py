@@ -126,7 +126,7 @@ def delete_student(student_id: int, db: Session = Depends(get_db), current_user:
 
 @app.put("/students/{student_id}", response_model=schemas.Student)
 def update_student(
-    student_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)
+    student_id: int, student: schemas.StudentUpdateAdmin, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)
 ):
     db_student = crud.update_student(db, student_id=student_id, student=student)
     if db_student is None:

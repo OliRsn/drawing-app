@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from . import models, schemas
+from .services import drawing_service
 
 # Classroom CRUD
 
@@ -66,12 +67,13 @@ def create_student(db: Session, student: schemas.StudentCreate, classroom_id: in
     db.refresh(db_student)
     return db_student
 
-def update_student(db: Session, student_id: int, student: schemas.StudentCreate):
+def update_student(db: Session, student_id: int, student: schemas.StudentUpdateAdmin):
     db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
     if db_student:
         db_student.name = student.name
-        db_student.weight = student.weight
         db_student.draw_count = student.draw_count
+        # Recalculate weight based on the new draw_count
+        db_student.weight = drawing_service.calculate_weight_from_draw_count(student.draw_count)
         db.commit()
         db.refresh(db_student)
     return db_student

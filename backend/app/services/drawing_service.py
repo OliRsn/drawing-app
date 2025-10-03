@@ -6,6 +6,8 @@ from fastapi import HTTPException, status
 
 from .. import crud, models, schemas
 
+def calculate_weight_from_draw_count(draw_count: int) -> float:
+    return 1 / (draw_count + 1) ** 2
 
 def adjust_weights(students: List[models.Student]):
     """
@@ -13,7 +15,7 @@ def adjust_weights(students: List[models.Student]):
     The more a student has been drawn, the less likely they are to be drawn again.
     """
     for student in students:
-        student.weight = 1 / (student.draw_count + 1) ** 2
+        student.weight = calculate_weight_from_draw_count(student.draw_count)
 
 
 def _calculate_probabilities(students: List[models.Student]) -> List[models.Student]:

@@ -84,7 +84,7 @@ export default function AdminPage() {
   async function handleUpdateStudent(student: Student) {
     if (!selectedClassroom) return;
     try {
-      await api.put(`/students/${student.id}`, { name: student.name, weight: student.weight, draw_count: student.draw_count });
+      await api.put(`/students/${student.id}`, { name: student.name, draw_count: student.draw_count });
       setEditingStudent(null);
       fetchStudents();
     } catch (error) {
@@ -186,15 +186,9 @@ export default function AdminPage() {
                             <TableCell>
                               {editingStudent && editingStudent.id === student.id ? (
                                 <Input
-                                  type="number" min="0" max="1" step="0.01"
+                                  type="number"
                                   value={editingStudent.weight.toString()}
-                                  onValueChange={(weight) => {
-                                    let newWeight = parseFloat(weight);
-                                    if (isNaN(newWeight)) newWeight = 0;
-                                    if (newWeight > 1) newWeight = 1;
-                                    else if (newWeight < 0) newWeight = 0;
-                                    setEditingStudent({ ...editingStudent, weight: newWeight });
-                                  }}
+                                  disabled
                                 />
                               ) : ( student.weight )}
                             </TableCell>

@@ -20,6 +20,11 @@ class Student(StudentBase):
     class Config:
         from_attributes = True
 
+
+class StudentUpdateAdmin(BaseModel):
+    name: str
+    draw_count: int
+
 class ClassroomBase(BaseModel):
     name: str
 
