@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2025-10-03
+
+### Changed
+
+- **Drawing Logic:** Adjusted the weight calculation formula to make the probability of drawing a student decrease more sharply as their draw count increases.
+
+### Added
+
+- **Admin Panel:** Added a "Reset All Classes" button and confirmation modals for all destructive actions (delete class, reset class, reset all) to improve classroom management and prevent accidental data loss.
+
+### Fixed
+
+- **Slot Machine Randomness:** Fixed a persistent issue where multiple slot machine instances would display visually similar reels. Each machine now uses a seeded pseudo-random number generator (PRNG) to guarantee a unique and deterministic reel for each draw.
+
 ## [1.3.0] - 2025-09-29
 
 ### Changed
