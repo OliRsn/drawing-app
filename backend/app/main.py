@@ -96,6 +96,14 @@ def reset_weights(classroom_id: int, db: Session = Depends(get_db), current_user
     return {"message": "Weights, draw counts, and drawing history reset successfully"}
 
 
+@app.post("/classrooms/reset-all", response_model=schemas.Message)
+def reset_all_classrooms(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin_user)):
+    classrooms = crud.list_classrooms(db, limit=1000)  # Assuming a large enough limit
+    for classroom in classrooms:
+        drawing_service.reset_classroom(db=db, classroom_id=classroom.id)
+    return {"message": "All classrooms have been reset successfully"}
+
+
 @app.post("/classrooms/{classroom_id}/students/", response_model=schemas.Student)
 def create_student_for_classroom(
     classroom_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)

@@ -28,7 +28,11 @@ export default function AdminPage() {
   const [newClassName, setNewClassName] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [resettingClassroomId, setResettingClassroomId] = useState<number | null>(null);
+  const [deletingClassroomId, setDeletingClassroomId] = useState<number | null>(null);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isResetAllModalOpen, setIsResetAllModalOpen] = useState(false);
 
   async function handleCreateClassroom() {
     if (!newClassName) return;
@@ -41,11 +45,24 @@ export default function AdminPage() {
     }
   }
 
-  async function handleDeleteClassroom(classroomId: number) {
+  async function handleResetAllClasses() {
     try {
-      await api.delete(`/classrooms/${classroomId}`);
+      await api.post(`/classrooms/reset-all`);
       fetchClassrooms();
-      if (selectedClassroomId === classroomId) {
+      if (selectedClassroomId) {
+        fetchStudents();
+      }
+    } catch (error) {
+      console.error("Error resetting all classes:", error);
+    }
+  }
+
+  async function handleDeleteClassroom() {
+    if (!deletingClassroomId) return;
+    try {
+      await api.delete(`/classrooms/${deletingClassroomId}`);
+      fetchClassrooms();
+      if (selectedClassroomId === deletingClassroomId) {
         setSelectedClassroomId(null);
       }
     } catch (error) {
@@ -85,11 +102,13 @@ export default function AdminPage() {
     }
   }
 
-  async function handleResetWeights() {
-    if (!selectedClassroom) return;
+  async function handleResetClass() {
+    if (!resettingClassroomId) return;
     try {
-      await api.post(`/classrooms/${selectedClassroom.id}/reset-weights`);
-      fetchStudents();
+      await api.post(`/classrooms/${resettingClassroomId}/reset-weights`);
+      if (selectedClassroomId === resettingClassroomId) {
+        fetchStudents();
+      }
     } catch (error) {
       console.error("Error resetting weights:", error);
     }
@@ -111,7 +130,12 @@ export default function AdminPage() {
             <div className="flex flex-col gap-6">
               <GlobalSettings />
               <Card>
-                <CardHeader><h2 className="text-xl font-semibold">Classes</h2></CardHeader>
+                <CardHeader className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold">Classes</h2>
+                  <Button color="danger" variant="bordered" onPress={() => setIsResetAllModalOpen(true)}>
+                    Réinitialiser toutes les classes
+                  </Button>
+                </CardHeader>
                 <CardBody>
                   <div className="flex flex-col gap-4">
                     {classrooms.map((classroom) => (
@@ -121,7 +145,10 @@ export default function AdminPage() {
                           <Button size="sm" variant="light" onPress={() => setSelectedClassroomId(classroom.id)}>
                             Gérer
                           </Button>
-                          <Button size="sm" color="danger" variant="light" onPress={() => handleDeleteClassroom(classroom.id)}>
+                          <Button size="sm" color="warning" variant="light" onPress={() => { setResettingClassroomId(classroom.id); setIsResetModalOpen(true); }}>
+                            Réinitialiser
+                          </Button>
+                          <Button size="sm" color="danger" variant="light" onPress={() => { setDeletingClassroomId(classroom.id); setIsDeleteModalOpen(true); }}>
                             Supprimer
                           </Button>
                         </div>
@@ -198,7 +225,6 @@ export default function AdminPage() {
                             <Input placeholder="Nouvel étudiant" value={newStudentName} onValueChange={setNewStudentName} />
                             <Button onPress={handleCreateStudent}>Ajouter</Button>
                         </div>
-                        <Button color="warning" variant="light" onPress={() => setIsResetModalOpen(true)}>Réinitialiser</Button>
                     </div>
                   </div>
                 ) : ( <p>Sélectionner une classe pour gérer les étudiants.</p> )}
@@ -216,7 +242,37 @@ export default function AdminPage() {
               <ModalBody><p>Êtes-vous sûr de vouloir réinitialiser les poids et le nombre de tirages de tous les étudiants de cette classe? Cette action est irréversible.</p></ModalBody>
               <ModalFooter>
                 <Button variant="light" onPress={onClose}>Annuler</Button>
-                <Button color="danger" onPress={() => { handleResetWeights(); onClose(); }}>Confirmer</Button>
+                <Button color="danger" onPress={() => { handleResetClass(); onClose(); }}>Confirmer</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isResetAllModalOpen} onOpenChange={setIsResetAllModalOpen}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Confirmation de réinitialisation totale</ModalHeader>
+              <ModalBody><p>Êtes-vous sûr de vouloir réinitialiser les poids et le nombre de tirages de TOUTES les classes? Cette action est irréversible.</p></ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose}>Annuler</Button>
+                <Button color="danger" onPress={() => { handleResetAllClasses(); onClose(); }}>Confirmer la réinitialisation totale</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Confirmation de suppression</ModalHeader>
+              <ModalBody><p>Êtes-vous sûr de vouloir supprimer cette classe? Tous les étudiants et l'historique des tirages associés seront également supprimés. Cette action est irréversible.</p></ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose}>Annuler</Button>
+                <Button color="danger" onPress={() => { handleDeleteClassroom(); onClose(); }}>Confirmer la suppression</Button>
               </ModalFooter>
             </>
           )}
