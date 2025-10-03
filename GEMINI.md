@@ -1,3 +1,6 @@
+## App
+The App is called LuckyStudent, and is meant for teachers to be able to draw students for classes exercices.
+The App take into account past drawing results to adapt students' drawing probabiliy after each run.
 
 ## Git Repo
 
