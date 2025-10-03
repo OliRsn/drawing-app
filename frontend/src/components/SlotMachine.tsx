@@ -15,40 +15,76 @@ interface SlotMachineProps {
   winner: Student | null;
   animationDelay: number; // ms
   spinId: number; // changes each time we spin
+  reelId: number;
 }
 
 const REEL_ITEM_WIDTH = 150;
 const NUM_REPEATS = 20;
+
+// Mulberry32 PRNG factory
+const mulberry32 = (seed: number) => {
+  return () => {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+// Fisher-Yates shuffle algorithm with a custom PRNG
+const shuffleWithRng = <T,>(array: T[], rng: () => number): T[] => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
 
 export const SlotMachine = ({
   students,
   winner,
   animationDelay,
   spinId,
+  reelId,
 }: SlotMachineProps) => {
   const [visibleItems, setVisibleItems] = useState(3);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Build reel items with repetitions
   const reel = useMemo<Student[]>(() => {
-    let reelItems: Student[] = [];
+    if (students.length === 0) {
+      return [];
+    }
 
+    // Create a deterministic, but unique PRNG for this machine instance
+    const seed = spinId + reelId * 1000 + (winner?.id || 0);
+    const rng = mulberry32(seed);
+
+    let reelItems: Student[] = [];
     for (let i = 0; i < NUM_REPEATS; i++) {
-      const shuffled = [...students].sort(() => Math.random() - 0.5);
+      const shuffled = shuffleWithRng(students, rng);
+      if (i > 0 && reelItems.length > 0 && reelItems[reelItems.length - 1].id === shuffled[0].id) {
+        if (shuffled.length > 1) {
+          shuffled.push(shuffled.shift()!);
+        }
+      }
       reelItems = reelItems.concat(shuffled);
     }
 
     if (winner) {
-      // Ensure winner is near the end
       const winnerIndex = Math.floor(reelItems.length * 0.9);
-      reelItems.splice(winnerIndex, 1, winner);
+      // To avoid duplicates, remove all other instances of the winner from the reel
+      reelItems = reelItems.filter(s => s.id !== winner.id);
+      // And insert the winner at the target position
+      reelItems.splice(winnerIndex, 0, winner);
     }
 
     return reelItems;
-  }, [students, winner, spinId]);
+  }, [students, winner, spinId, reelId]);
 
   const winnerIndex = useMemo(() => {
     if (!winner) return -1;
+    // The winner should now be unique, but lastIndexOf is safest
     return reel.lastIndexOf(winner);
   }, [reel, winner]);
 
