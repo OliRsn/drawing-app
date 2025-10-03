@@ -13,7 +13,7 @@ def adjust_weights(students: List[models.Student]):
     The more a student has been drawn, the less likely they are to be drawn again.
     """
     for student in students:
-        student.weight = 1 / (student.draw_count + 1)
+        student.weight = 1 / (student.draw_count + 1) ** 2
 
 
 def _calculate_probabilities(students: List[models.Student]) -> List[models.Student]:
