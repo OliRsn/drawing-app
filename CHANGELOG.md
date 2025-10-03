@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Drawing Logic:** Adjusted the weight calculation formula to make the probability of drawing a student decrease more sharply as their draw count increases.
+- **Admin Panel:** The student editing logic has been refactored. Admins can now only modify the `draw_count`, and the `weight` is automatically recalculated on the backend.
 
 ### Added
 
