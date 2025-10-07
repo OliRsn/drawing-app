@@ -2,6 +2,26 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
+# Forward declaration to handle circular dependencies
+class Student(BaseModel):
+    pass
+
+class GroupBase(BaseModel):
+    name: str
+
+class GroupCreate(GroupBase):
+    pass
+
+class GroupInDB(GroupBase):
+    id: int
+    classroom_id: int
+
+    class Config:
+        from_attributes = True
+
+class Group(GroupInDB):
+    students: List['Student'] = []
+
 class StudentBase(BaseModel):
     name: str
     weight: Optional[float] = 1.0
@@ -16,9 +36,14 @@ class Student(StudentBase):
     weight: float
     draw_count: int
     probability: Optional[float] = None
+    groups: List[GroupInDB] = []
 
     class Config:
         from_attributes = True
+
+# Update model references
+Group.model_rebuild()
+Student.model_rebuild()
 
 
 class StudentUpdateAdmin(BaseModel):
@@ -34,6 +59,7 @@ class ClassroomCreate(ClassroomBase):
 class Classroom(ClassroomBase):
     id: int
     students: List[Student] = []
+    groups: List[Group] = []
 
     class Config:
         from_attributes = True
@@ -41,6 +67,7 @@ class Classroom(ClassroomBase):
 class DrawCreate(BaseModel):
     num_students: int
     student_ids: Optional[List[int]] = None
+    group_id: Optional[int] = None
 
 class StudentIDs(BaseModel):
     student_ids: List[int]
@@ -103,4 +130,3 @@ class PasswordUpdate(BaseModel):
 
 class Message(BaseModel):
     message: str
-

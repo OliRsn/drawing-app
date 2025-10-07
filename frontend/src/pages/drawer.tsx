@@ -15,29 +15,21 @@ import { SlotMachine } from "@/components/SlotMachine";
 import { DrawingHistory } from "@/components/DrawingHistory";
 import { StudentCard } from "@/components/StudentCard";
 import { useClassrooms } from "@/hooks/useClassrooms";
-
-// === Types ===
-interface Student {
-  id: number;
-  name: string;
-  weight: number;
-  draw_count: number;
-  probability?: number;
-}
+import { useClassroom } from "@/hooks/useClassroom";
+import { Student } from "@/types";
 
 const SLOT_DURATION = 5000; // ms, matches SlotMachine
 const STAGGER_DELAY = 1000; // ms
 
-// === Component ===
-export function DrawerPage() {
+export default function DrawerPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { classrooms, isLoading: classroomsLoading } = useClassrooms();
   const [selectedClassroomId, setSelectedClassroomId] = useState<number | null>(null);
-  
-  const [students, setStudents] = useState<Student[]>([]);
-  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+
+  const { classroom, isLoading: studentsLoading, refetch: refetchClassroom } = useClassroom(selectedClassroomId, selectedGroupId);
+
   const [slotMachineStudents, setSlotMachineStudents] = useState<Student[]>([]);
-  
   const [drawnStudents, setDrawnStudents] = useState<(Student | null)[]>([null]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -51,14 +43,16 @@ export function DrawerPage() {
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
 
-  // Effect to set initial classroom selection
   useEffect(() => {
     if (!selectedClassroomId && classrooms.length > 0) {
       setSelectedClassroomId(classrooms[0].id);
     }
   }, [classrooms, selectedClassroomId]);
 
-  // Effect to fetch number of slot machines on mount
+  useEffect(() => {
+    setSelectedGroupId(null);
+  }, [selectedClassroomId]);
+
   useEffect(() => {
     if (isAuthenticated) {
       api.get(`/settings/numSlotMachines`).then(response => {
@@ -66,36 +60,26 @@ export function DrawerPage() {
         setNumSlotMachines(num);
         setDrawnStudents(Array(num).fill(null));
       }).catch(() => {
-        setDrawnStudents(Array(3).fill(null)); // Default on error
+        setDrawnStudents(Array(3).fill(null));
       });
     }
   }, [isAuthenticated]);
 
-  // Effect to fetch students when classroom changes
   useEffect(() => {
-    if (selectedClassroomId && isAuthenticated) {
-      setStudentsLoading(true);
-      api.get(`/classrooms/${selectedClassroomId}/students/probabilities`)
-        .then(response => {
-          const fetchedStudents: Student[] = response.data;
-          setStudents(fetchedStudents);
-          setSelectedStudentIds(new Set(fetchedStudents.map(s => s.id)));
-          setSlotMachineStudents(fetchedStudents);
-          setDrawnStudents(Array(numSlotMachines).fill(null));
-          setHasConfirmed(false);
-          setSpinId(0);
-        })
-        .catch(error => console.error("Error fetching students:", error))
-        .finally(() => setStudentsLoading(false));
+    if (classroom?.students) {
+      const studentIds = new Set(classroom.students.map(s => s.id));
+      setSelectedStudentIds(studentIds);
+      setSlotMachineStudents(classroom.students);
+      setDrawnStudents(Array(numSlotMachines).fill(null));
+      setHasConfirmed(false);
+      setSpinId(0);
     }
-  }, [selectedClassroomId, numSlotMachines, isAuthenticated]);
+  }, [classroom?.students, numSlotMachines]);
 
-  // Effect to manage validation checkboxes
   useEffect(() => {
     setSelectedToValidate(Array(drawnStudents.length).fill(true));
   }, [drawnStudents]);
 
-  // Stop drawing animation timer
   useEffect(() => {
     if (isDrawing) {
       const totalAnimationTime = SLOT_DURATION + (drawnStudents.length - 1) * STAGGER_DELAY;
@@ -105,13 +89,14 @@ export function DrawerPage() {
   }, [isDrawing, drawnStudents.length]);
 
   async function handleDraw() {
-    if (!selectedClassroomId) return;
+    if (!selectedClassroomId || !classroom) return;
     setHasConfirmed(false);
-    setSlotMachineStudents(students.filter(s => selectedStudentIds.has(s.id)));
+    setSlotMachineStudents(classroom.students.filter(s => selectedStudentIds.has(s.id)));
     try {
       const response = await api.post(`/classrooms/${selectedClassroomId}/draw`, {
         num_students: drawnStudents.length,
         student_ids: Array.from(selectedStudentIds),
+        group_id: selectedGroupId,
       });
       setDrawnStudents(response.data);
       setSpinId(id => id + 1);
@@ -132,8 +117,7 @@ export function DrawerPage() {
     try {
       await api.post(`/classrooms/${selectedClassroomId}/confirm_draw`, { student_ids });
       setHasConfirmed(true);
-      const response = await api.get(`/classrooms/${selectedClassroomId}/students/probabilities`);
-      setStudents(response.data);
+      refetchClassroom();
       setHistoryRefreshTrigger(Date.now());
     } catch (error) {
       console.error("Error confirming draw:", error);
@@ -148,6 +132,7 @@ export function DrawerPage() {
   };
 
   const sortedStudents = useMemo(() => {
+    const students = classroom?.students || [];
     const sorted = [...students].sort((a, b) => {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       const valueA = displayMode === "probability" ? a.probability || 0 : a.weight;
@@ -160,7 +145,7 @@ export function DrawerPage() {
     }
     const maxWeight = Math.max(...sorted.map(s => s.weight), 0);
     return sorted.map(student => ({ ...student, scaledValue: maxWeight > 0 ? (student.weight / maxWeight) * 100 : 0 }));
-  }, [students, sortBy, displayMode]);
+  }, [classroom?.students, sortBy, displayMode]);
 
   if (authLoading || classroomsLoading) {
     return <DefaultLayout><div className="flex justify-center items-center h-full"><Spinner size="lg" /></div></DefaultLayout>;
@@ -174,14 +159,27 @@ export function DrawerPage() {
     <DefaultLayout>
       <section className="py-2">
         <div className="text-3xl font-bold mb-6 text-center"><h1 className={title()}>Tirage au sort</h1></div>
-        <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Select
             label="Sélectionner une classe"
             selectedKeys={selectedClassroomId ? [selectedClassroomId.toString()] : []}
-            onSelectionChange={(keys) => setSelectedClassroomId(Number(Array.from(keys)[0]))}
+            onSelectionChange={(keys: any) => setSelectedClassroomId(Number(Array.from(keys)[0]))}
           >
             {classrooms.map(c => <SelectItem key={c.id}>{c.name}</SelectItem>)}
           </Select>
+          {classroom && classroom.groups && classroom.groups.length > 0 && (
+            <Select
+              label="Sélectionner un groupe"
+              selectedKeys={selectedGroupId ? [selectedGroupId.toString()] : ['all']}
+              onSelectionChange={(keys: any) => {
+                const key = Array.from(keys)[0];
+                setSelectedGroupId(key === 'all' ? null : Number(key));
+              }}
+              items={[{id: 'all', name: 'Tous les élèves'}, ...classroom.groups]}
+            >
+              {(item) => <SelectItem key={item.id}>{item.name}</SelectItem>}
+            </Select>
+          )}
         </div>
 
         <Card className="mb-6">
@@ -192,10 +190,10 @@ export function DrawerPage() {
           {isStudentSelectionOpen && (
             <CardBody>
               <div className="flex flex-wrap gap-2">
-                {[...students].sort((a, b) => a.name.localeCompare(b.name)).map(student => (
+                {[...(classroom?.students || [])].sort((a, b) => a.name.localeCompare(b.name)).map(student => (
                   <Button
                     key={student.id}
-                    variant="flat"
+                    variant={selectedStudentIds.has(student.id) ? "flat" : "flat"}
                     color={selectedStudentIds.has(student.id) ? "secondary" : "danger"}
                     onPress={() => {
                       const newIds = new Set(selectedStudentIds);
@@ -226,7 +224,7 @@ export function DrawerPage() {
                 <motion.div key={index} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
                   <div className="flex items-center gap-4">
                     <SlotMachine students={slotMachineStudents} winner={student} animationDelay={index * STAGGER_DELAY} spinId={spinId} reelId={index} />
-                    <Switch color="secondary" isSelected={selectedToValidate[index] ?? true} onValueChange={isSelected => {
+                    <Switch color="secondary" isSelected={selectedToValidate[index] ?? true} onValueChange={(isSelected: boolean) => {
                       const newSelected = [...selectedToValidate];
                       newSelected[index] = isSelected;
                       setSelectedToValidate(newSelected);
@@ -259,14 +257,14 @@ export function DrawerPage() {
               </ButtonGroup>
               <div className="flex items-center gap-2">
                 <ChartBarIcon className="w-5 h-5 text-slate-500" />
-                <Switch isSelected={displayMode === "weight"} onValueChange={isSelected => setDisplayMode(isSelected ? "weight" : "probability")} />
+                <Switch isSelected={displayMode === "weight"} onValueChange={(isSelected: boolean) => setDisplayMode(isSelected ? "weight" : "probability")} />
                 <AdjustmentsHorizontalIcon className="w-5 h-5 text-slate-500" />
               </div>
             </div>
           </CardHeader>
           <CardBody>
-            <div className="grid grid-cols-4 gap-4">
-              {studentsLoading ? <Spinner /> : sortedStudents.map(student => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {studentsLoading ? <div className="col-span-full flex justify-center"><Spinner /></div> : sortedStudents.map(student => {
                 const isProb = displayMode === "probability";
                 const value = isProb ? student.probability || 0 : student.weight;
                 const displayValue = isProb ? `${(value * 100).toFixed(1)}%` : `${(student.scaledValue || 0).toFixed(0)}%`;

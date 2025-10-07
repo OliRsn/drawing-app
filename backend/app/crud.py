@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from . import models, schemas
 from .services import drawing_service
@@ -57,8 +57,13 @@ def get_students_by_ids(db: Session, student_ids: List[int]) -> List[models.Stud
 def list_students(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Student).offset(skip).limit(limit).all()
 
-def list_students_by_classroom(db: Session, classroom_id: int):
-    return db.query(models.Student).filter(models.Student.classroom_id == classroom_id).all()
+def list_students_by_classroom(db: Session, classroom_id: int, group_id: Optional[int] = None):
+    query = db.query(models.Student).filter(models.Student.classroom_id == classroom_id)
+    if group_id:
+        query = query.join(models.student_group_association).filter(
+            models.student_group_association.c.group_id == group_id
+        )
+    return query.all()
 
 def create_student(db: Session, student: schemas.StudentCreate, classroom_id: int):
     db_student = models.Student(**student.dict(), classroom_id=classroom_id)
@@ -84,6 +89,46 @@ def delete_student(db: Session, student_id: int):
         db.delete(db_student)
         db.commit()
     return db_student
+
+# Group CRUD
+
+def get_group(db: Session, group_id: int):
+    return db.query(models.Group).filter(models.Group.id == group_id).first()
+
+def list_groups_by_classroom(db: Session, classroom_id: int):
+    return db.query(models.Group).filter(models.Group.classroom_id == classroom_id).all()
+
+def create_group(db: Session, group: schemas.GroupCreate, classroom_id: int):
+    db_group = models.Group(name=group.name, classroom_id=classroom_id)
+    db.add(db_group)
+    db.commit()
+    db.refresh(db_group)
+    return db_group
+
+def delete_group(db: Session, group_id: int):
+    db_group = db.query(models.Group).filter(models.Group.id == group_id).first()
+    if db_group:
+        db.delete(db_group)
+        db.commit()
+    return db_group
+
+def add_student_to_group(db: Session, group_id: int, student_id: int):
+    group = get_group(db, group_id)
+    student = get_student(db, student_id)
+    if group and student and student not in group.students:
+        group.students.append(student)
+        db.commit()
+        db.refresh(group)
+    return group
+
+def remove_student_from_group(db: Session, group_id: int, student_id: int):
+    group = get_group(db, group_id)
+    student = get_student(db, student_id)
+    if group and student and student in group.students:
+        group.students.remove(student)
+        db.commit()
+        db.refresh(group)
+    return group
 
 # Settings CRUD
 

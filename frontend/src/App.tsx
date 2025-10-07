@@ -1,6 +1,6 @@
 import { Route, Routes, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { DrawerPage } from "@/pages/drawer";
+import DrawerPage from "@/pages/drawer";
 import AdminPage from "@/pages/admin";
 import LoginPage from "@/pages/login";
 import ProfilePage from "@/pages/profile";

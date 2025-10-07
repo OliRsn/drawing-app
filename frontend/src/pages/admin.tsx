@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { Button } from "@heroui/button";
-import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Input } from "@heroui/input";
-import { Spinner, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Input, Spinner, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
 import api from "@/lib/api";
 
 import { title } from "@/components/primitives";
@@ -10,20 +7,14 @@ import DefaultLayout from "@/layouts/default";
 import GlobalSettings from "@/components/GlobalSettings";
 import { useClassrooms } from "@/hooks/useClassrooms";
 import { useClassroom } from "@/hooks/useClassroom";
+import { GroupManager } from "@/components/GroupManager";
+import { StudentGroupEditor } from "@/components/StudentGroupEditor";
+import { Student } from "@/types";
 
-// === Types ===
-interface Student {
-  id: number;
-  name: string;
-  weight: number;
-  draw_count: number;
-}
-
-// === Component ===
 export default function AdminPage() {
   const { classrooms, isLoading: isLoadingClassrooms, refetch: fetchClassrooms } = useClassrooms();
   const [selectedClassroomId, setSelectedClassroomId] = useState<number | null>(null);
-  const { classroom: selectedClassroom, refetch: fetchStudents } = useClassroom(selectedClassroomId);
+  const { classroom: selectedClassroom, refetch: fetchClassroom } = useClassroom(selectedClassroomId);
   
   const [newClassName, setNewClassName] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
@@ -50,7 +41,7 @@ export default function AdminPage() {
       await api.post(`/classrooms/reset-all`);
       fetchClassrooms();
       if (selectedClassroomId) {
-        fetchStudents();
+        fetchClassroom();
       }
     } catch (error) {
       console.error("Error resetting all classes:", error);
@@ -75,7 +66,7 @@ export default function AdminPage() {
     try {
       await api.post(`/classrooms/${selectedClassroom.id}/students/`, { name: newStudentName, weight: 1, draw_count: 0 });
       setNewStudentName("");
-      fetchStudents();
+      fetchClassroom();
     } catch (error) {
       console.error("Error creating student:", error);
     }
@@ -86,7 +77,7 @@ export default function AdminPage() {
     try {
       await api.put(`/students/${student.id}`, { name: student.name, draw_count: student.draw_count });
       setEditingStudent(null);
-      fetchStudents();
+      fetchClassroom();
     } catch (error) {
       console.error("Error updating student:", error);
     }
@@ -96,7 +87,7 @@ export default function AdminPage() {
     if (!selectedClassroom) return;
     try {
       await api.delete(`/students/${studentId}`);
-      fetchStudents();
+      fetchClassroom();
     } catch (error) {
       console.error("Error deleting student:", error);
     }
@@ -107,7 +98,7 @@ export default function AdminPage() {
     try {
       await api.post(`/classrooms/${resettingClassroomId}/reset-weights`);
       if (selectedClassroomId === resettingClassroomId) {
-        fetchStudents();
+        fetchClassroom();
       }
     } catch (error) {
       console.error("Error resetting weights:", error);
@@ -168,11 +159,13 @@ export default function AdminPage() {
               <CardBody>
                 {selectedClassroom ? (
                   <div className="flex flex-col gap-4">
-                    <Table aria-label="Table des étudiants">
+                    <GroupManager classroom={selectedClassroom} onUpdate={fetchClassroom} />
+                    <Table aria-label="Table des étudiants" className="mt-4">
                       <TableHeader>
                         <TableColumn>Nom</TableColumn>
                         <TableColumn>Poids</TableColumn>
                         <TableColumn>Tirages</TableColumn>
+                        <TableColumn>Groupes</TableColumn>
                         <TableColumn>Actions</TableColumn>
                       </TableHeader>
                       <TableBody>
@@ -180,22 +173,19 @@ export default function AdminPage() {
                           <TableRow key={student.id}>
                             <TableCell>
                               {editingStudent && editingStudent.id === student.id ? (
-                                <Input value={editingStudent.name} onValueChange={(name) => setEditingStudent({ ...editingStudent, name })} />
+                                <Input value={editingStudent.name} onValueChange={(name: string) => setEditingStudent({ ...editingStudent, name })} />
                               ) : ( student.name )}
                             </TableCell>
                             <TableCell>
-                              {editingStudent && editingStudent.id === student.id ? (
-                                <Input
-                                  type="number"
-                                  value={editingStudent.weight.toString()}
-                                  disabled
-                                />
-                              ) : ( student.weight )}
+                              {student.weight.toFixed(4)}
                             </TableCell>
                             <TableCell>
                               {editingStudent && editingStudent.id === student.id ? (
-                                <Input type="number" value={editingStudent.draw_count.toString()} onValueChange={(draw_count) => setEditingStudent({ ...editingStudent, draw_count: parseInt(draw_count) })} />
+                                <Input type="number" value={editingStudent.draw_count.toString()} onValueChange={(draw_count: string) => setEditingStudent({ ...editingStudent, draw_count: parseInt(draw_count) || 0 })} />
                               ) : ( student.draw_count )}
+                            </TableCell>
+                            <TableCell>
+                               <StudentGroupEditor student={student} allGroups={selectedClassroom.groups} onUpdate={fetchClassroom} />
                             </TableCell>
                             <TableCell>
                               {editingStudent && editingStudent.id === student.id ? (
@@ -230,7 +220,7 @@ export default function AdminPage() {
 
       <Modal isOpen={isResetModalOpen} onOpenChange={setIsResetModalOpen}>
         <ModalContent>
-          {(onClose) => (
+          {(onClose: () => void) => (
             <>
               <ModalHeader className="flex flex-col gap-1">Confirmation de réinitialisation</ModalHeader>
               <ModalBody><p>Êtes-vous sûr de vouloir réinitialiser les poids et le nombre de tirages de tous les étudiants de cette classe? Cette action est irréversible.</p></ModalBody>
@@ -245,7 +235,7 @@ export default function AdminPage() {
 
       <Modal isOpen={isResetAllModalOpen} onOpenChange={setIsResetAllModalOpen}>
         <ModalContent>
-          {(onClose) => (
+          {(onClose: () => void) => (
             <>
               <ModalHeader className="flex flex-col gap-1">Confirmation de réinitialisation totale</ModalHeader>
               <ModalBody><p>Êtes-vous sûr de vouloir réinitialiser les poids et le nombre de tirages de TOUTES les classes? Cette action est irréversible.</p></ModalBody>
@@ -260,7 +250,7 @@ export default function AdminPage() {
 
       <Modal isOpen={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <ModalContent>
-          {(onClose) => (
+          {(onClose: () => void) => (
             <>
               <ModalHeader className="flex flex-col gap-1">Confirmation de suppression</ModalHeader>
               <ModalBody><p>Êtes-vous sûr de vouloir supprimer cette classe? Tous les étudiants et l'historique des tirages associés seront également supprimés. Cette action est irréversible.</p></ModalBody>

@@ -1,6 +1,6 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
@@ -110,6 +110,14 @@ def create_student_for_classroom(
 ):
     return crud.create_student(db=db, student=student, classroom_id=classroom_id)
 
+@app.get("/classrooms/{classroom_id}/students", response_model=List[schemas.Student])
+def read_students_from_classroom(
+    classroom_id: int,
+    group_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    return drawing_service.list_students_with_probabilities(db, classroom_id=classroom_id, group_id=group_id)
 
 @app.get("/students/", response_model=List[schemas.Student])
 def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
@@ -133,6 +141,53 @@ def update_student(
         raise HTTPException(status_code=404, detail="Student not found")
     return db_student
 
+# Group Endpoints
+@app.get("/classrooms/{classroom_id}/groups", response_model=List[schemas.Group])
+def list_groups(
+    classroom_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    return crud.list_groups_by_classroom(db, classroom_id=classroom_id)
+
+@app.post("/classrooms/{classroom_id}/groups", response_model=schemas.Group)
+def create_group(
+    classroom_id: int,
+    group: schemas.GroupCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_admin_user)
+):
+    return crud.create_group(db, group=group, classroom_id=classroom_id)
+
+@app.delete("/groups/{group_id}", response_model=schemas.Group)
+def delete_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_admin_user)
+):
+    db_group = crud.delete_group(db, group_id=group_id)
+    if db_group is None:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return db_group
+
+@app.post("/groups/{group_id}/students/{student_id}", response_model=schemas.Group)
+def add_student_to_group(
+    group_id: int,
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_admin_user)
+):
+    return crud.add_student_to_group(db, group_id=group_id, student_id=student_id)
+
+@app.delete("/groups/{group_id}/students/{student_id}", response_model=schemas.Group)
+def remove_student_from_group(
+    group_id: int,
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_admin_user)
+):
+    return crud.remove_student_from_group(db, group_id=group_id, student_id=student_id)
+
 
 @app.get("/classrooms/{classroom_id}/students/probabilities", response_model=List[schemas.Student])
 def read_student_probabilities(classroom_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
@@ -149,7 +204,8 @@ def draw_students_for_classroom(
         db=db,
         classroom_id=classroom_id,
         num_students=draw_input.num_students,
-        student_ids=draw_input.student_ids
+        student_ids=draw_input.student_ids,
+        group_id=draw_input.group_id
     )
 
 @app.get("/classrooms/{classroom_id}/drawing-history", response_model=List[schemas.DrawingHistory])

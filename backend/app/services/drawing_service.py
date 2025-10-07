@@ -35,33 +35,36 @@ def _calculate_probabilities(students: List[models.Student]) -> List[models.Stud
     return students
 
 
-def list_students_with_probabilities(db: Session, classroom_id: int) -> List[models.Student]:
+def list_students_with_probabilities(db: Session, classroom_id: int, group_id: Optional[int] = None) -> List[models.Student]:
     """
-    Gets all students for a classroom and calculates their drawing probability.
+    Gets students for a classroom (or group) and calculates their drawing probability
+    within that group.
     """
-    students = crud.list_students_by_classroom(db, classroom_id=classroom_id)
+    students = crud.list_students_by_classroom(db, classroom_id=classroom_id, group_id=group_id)
     return _calculate_probabilities(students)
 
 
-def draw_students(db: Session, classroom_id: int, num_students: int, student_ids: Optional[List[int]] = None) -> List[models.Student]:
+def draw_students(db: Session, classroom_id: int, num_students: int, student_ids: Optional[List[int]] = None, group_id: Optional[int] = None) -> List[models.Student]:
     """
-    Performs a weighted random draw of students from a classroom.
-    Validates that the provided student_ids belong to the classroom.
+    Performs a weighted random draw of students.
+    Can be filtered by a group and/or a manual selection of students.
     """
-    classroom_students = crud.list_students_by_classroom(db, classroom_id=classroom_id)
-    classroom_student_ids = {s.id for s in classroom_students}
+    # Determine the initial pool of students
+    students_pool = crud.list_students_by_classroom(db, classroom_id=classroom_id, group_id=group_id)
+    pool_student_ids = {s.id for s in students_pool}
 
+    # If student_ids are provided, filter the pool
     if student_ids:
-        # Validate that all provided student_ids are valid for this classroom
-        if not set(student_ids).issubset(classroom_student_ids):
+        # Validate that all provided student_ids are valid for the current pool
+        if not set(student_ids).issubset(pool_student_ids):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="One or more selected students do not belong to this classroom."
+                detail="One or more selected students do not belong to the selected subgroup or classroom."
             )
         # Filter the list to only the students who are eligible for the draw
-        students_to_draw_from = [s for s in classroom_students if s.id in student_ids]
+        students_to_draw_from = [s for s in students_pool if s.id in student_ids]
     else:
-        students_to_draw_from = classroom_students
+        students_to_draw_from = students_pool
 
     if not students_to_draw_from:
         return []

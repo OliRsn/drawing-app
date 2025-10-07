@@ -1,25 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
+import { Classroom, Student } from '@/types';
 
-interface Student {
-  id: number;
-  name: string;
-  weight: number;
-  draw_count: number;
-}
-
-interface Classroom {
-  id: number;
-  name: string;
-  students: Student[];
-}
-
-export const useClassroom = (classroomId: number | null) => {
+export const useClassroom = (classroomId: number | null, groupId: number | null = null) => {
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
-  const fetchClassroom = useCallback(async () => {
+  const fetchClassroomData = useCallback(async () => {
     if (!classroomId) {
       setClassroom(null);
       return;
@@ -28,19 +16,36 @@ export const useClassroom = (classroomId: number | null) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get(`/classrooms/${classroomId}`);
-      setClassroom(response.data);
+      const classroomPromise = api.get(`/classrooms/${classroomId}`);
+      const studentsPromise = api.get(`/classrooms/${classroomId}/students`, {
+        params: groupId ? { group_id: groupId } : {},
+      });
+
+      const [classroomResponse, studentsResponse] = await Promise.all([
+        classroomPromise,
+        studentsPromise,
+      ]);
+
+      const classroomData: Classroom = classroomResponse.data;
+      const studentsData: Student[] = studentsResponse.data;
+
+      // Replace students in classroom data with the potentially filtered list
+      classroomData.students = studentsData;
+
+      setClassroom(classroomData);
+
     } catch (err) {
       setError(err);
-      console.error(`Error fetching classroom ${classroomId}:`, err);
+      console.error(`Error fetching classroom data for classroom ${classroomId}:`, err);
+      setClassroom(null);
     } finally {
       setIsLoading(false);
     }
-  }, [classroomId]);
+  }, [classroomId, groupId]);
 
   useEffect(() => {
-    fetchClassroom();
-  }, [fetchClassroom]);
+    fetchClassroomData();
+  }, [fetchClassroomData]);
 
-  return { classroom, setClassroom, isLoading, error, refetch: fetchClassroom };
+  return { classroom, setClassroom, isLoading, error, refetch: fetchClassroomData };
 };
