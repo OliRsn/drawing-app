@@ -26,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/token", response_model=schemas.Token)
+@app.post("/token", response_model=schemas.Token, tags=["Authentication"])
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = auth.get_user(db, username=form_data.username)
     if not user or not auth.verify_password(form_data.password, user.password_hash):
@@ -42,11 +42,11 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/me", response_model=schemas.User)
+@app.get("/me", response_model=schemas.User, tags=["Authentication"])
 async def read_users_me(current_user: models.User = Depends(auth.get_current_active_user)):
     return current_user
 
-@app.put("/me/password", response_model=schemas.Message)
+@app.put("/me/password", response_model=schemas.Message, tags=["Authentication"])
 def update_password(
     password_update: schemas.PasswordUpdate,
     db: Session = Depends(get_db),
@@ -64,17 +64,17 @@ def update_password(
     return {"message": "Password updated successfully"}
 
 
-@app.post("/classrooms/", response_model=schemas.Classroom)
+@app.post("/classrooms/", response_model=schemas.Classroom, tags=["Classrooms"])
 def create_classroom(classroom: schemas.ClassroomCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     return crud.create_classroom(db=db, classroom=classroom)
 
 
-@app.get("/classrooms/", response_model=List[schemas.Classroom])
+@app.get("/classrooms/", response_model=List[schemas.Classroom], tags=["Classrooms"])
 def read_classrooms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     return crud.list_classrooms(db, skip=skip, limit=limit)
 
 
-@app.get("/classrooms/{classroom_id}", response_model=schemas.Classroom)
+@app.get("/classrooms/{classroom_id}", response_model=schemas.Classroom, tags=["Classrooms"])
 def read_classroom(classroom_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     db_classroom = crud.get_classroom(db, classroom_id=classroom_id)
     if db_classroom is None:
@@ -82,7 +82,7 @@ def read_classroom(classroom_id: int, db: Session = Depends(get_db), current_use
     return db_classroom
 
 
-@app.delete("/classrooms/{classroom_id}", response_model=schemas.Classroom)
+@app.delete("/classrooms/{classroom_id}", response_model=schemas.Classroom, tags=["Classrooms"])
 def delete_classroom(classroom_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin_user)):
     db_classroom = crud.delete_classroom(db, classroom_id=classroom_id)
     if db_classroom is None:
@@ -90,27 +90,27 @@ def delete_classroom(classroom_id: int, db: Session = Depends(get_db), current_u
     return db_classroom
 
 
-@app.post("/classrooms/{classroom_id}/reset-weights", response_model=schemas.Message)
+@app.post("/classrooms/{classroom_id}/reset-weights", response_model=schemas.Message, tags=["Admin"])
 def reset_weights(classroom_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin_user)):
     drawing_service.reset_classroom(db=db, classroom_id=classroom_id)
     return {"message": "Weights, draw counts, and drawing history reset successfully"}
 
 
-@app.post("/classrooms/reset-all", response_model=schemas.Message)
+@app.post("/classrooms/reset-all", response_model=schemas.Message, tags=["Admin"])
 def reset_all_classrooms(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin_user)):
-    classrooms = crud.list_classrooms(db, limit=1000)  # Assuming a large enough limit
+    classrooms = crud.list_classrooms(db, limit=1000)
     for classroom in classrooms:
         drawing_service.reset_classroom(db=db, classroom_id=classroom.id)
     return {"message": "All classrooms have been reset successfully"}
 
 
-@app.post("/classrooms/{classroom_id}/students/", response_model=schemas.Student)
+@app.post("/classrooms/{classroom_id}/students/", response_model=schemas.Student, tags=["Students"])
 def create_student_for_classroom(
     classroom_id: int, student: schemas.StudentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)
 ):
     return crud.create_student(db=db, student=student, classroom_id=classroom_id)
 
-@app.get("/classrooms/{classroom_id}/students", response_model=List[schemas.Student])
+@app.get("/classrooms/{classroom_id}/students", response_model=List[schemas.Student], tags=["Students"])
 def read_students_from_classroom(
     classroom_id: int,
     group_id: Optional[int] = None,
@@ -119,12 +119,12 @@ def read_students_from_classroom(
 ):
     return drawing_service.list_students_with_probabilities(db, classroom_id=classroom_id, group_id=group_id)
 
-@app.get("/students/", response_model=List[schemas.Student])
+@app.get("/students/", response_model=List[schemas.Student], tags=["Students"])
 def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     return crud.list_students(db, skip=skip, limit=limit)
 
 
-@app.delete("/students/{student_id}", response_model=schemas.Student)
+@app.delete("/students/{student_id}", response_model=schemas.Student, tags=["Students"])
 def delete_student(student_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_admin_user)):
     db_student = crud.delete_student(db, student_id=student_id)
     if db_student is None:
@@ -132,7 +132,7 @@ def delete_student(student_id: int, db: Session = Depends(get_db), current_user:
     return db_student
 
 
-@app.put("/students/{student_id}", response_model=schemas.Student)
+@app.put("/students/{student_id}", response_model=schemas.Student, tags=["Students"])
 def update_student(
     student_id: int, student: schemas.StudentUpdateAdmin, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)
 ):
@@ -142,7 +142,7 @@ def update_student(
     return db_student
 
 # Group Endpoints
-@app.get("/classrooms/{classroom_id}/groups", response_model=List[schemas.Group])
+@app.get("/classrooms/{classroom_id}/groups", response_model=List[schemas.Group], tags=["Groups"])
 def list_groups(
     classroom_id: int,
     db: Session = Depends(get_db),
@@ -150,7 +150,7 @@ def list_groups(
 ):
     return crud.list_groups_by_classroom(db, classroom_id=classroom_id)
 
-@app.post("/classrooms/{classroom_id}/groups", response_model=schemas.Group)
+@app.post("/classrooms/{classroom_id}/groups", response_model=schemas.Group, tags=["Groups"])
 def create_group(
     classroom_id: int,
     group: schemas.GroupCreate,
@@ -159,7 +159,7 @@ def create_group(
 ):
     return crud.create_group(db, group=group, classroom_id=classroom_id)
 
-@app.delete("/groups/{group_id}", response_model=schemas.Group)
+@app.delete("/groups/{group_id}", response_model=schemas.Group, tags=["Groups"])
 def delete_group(
     group_id: int,
     db: Session = Depends(get_db),
@@ -170,7 +170,7 @@ def delete_group(
         raise HTTPException(status_code=404, detail="Group not found")
     return db_group
 
-@app.post("/groups/{group_id}/students/{student_id}", response_model=schemas.Group)
+@app.post("/groups/{group_id}/students/{student_id}", response_model=schemas.Group, tags=["Groups"])
 def add_student_to_group(
     group_id: int,
     student_id: int,
@@ -179,7 +179,7 @@ def add_student_to_group(
 ):
     return crud.add_student_to_group(db, group_id=group_id, student_id=student_id)
 
-@app.delete("/groups/{group_id}/students/{student_id}", response_model=schemas.Group)
+@app.delete("/groups/{group_id}/students/{student_id}", response_model=schemas.Group, tags=["Groups"])
 def remove_student_from_group(
     group_id: int,
     student_id: int,
@@ -189,11 +189,11 @@ def remove_student_from_group(
     return crud.remove_student_from_group(db, group_id=group_id, student_id=student_id)
 
 
-@app.get("/classrooms/{classroom_id}/students/probabilities", response_model=List[schemas.Student])
+@app.get("/classrooms/{classroom_id}/students/probabilities", response_model=List[schemas.Student], tags=["Drawing"])
 def read_student_probabilities(classroom_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     return drawing_service.list_students_with_probabilities(db, classroom_id=classroom_id)
 
-@app.post("/classrooms/{classroom_id}/draw", response_model=List[schemas.Student])
+@app.post("/classrooms/{classroom_id}/draw", response_model=List[schemas.Student], tags=["Drawing"])
 def draw_students_for_classroom(
     classroom_id: int,
     draw_input: schemas.DrawCreate,
@@ -208,11 +208,11 @@ def draw_students_for_classroom(
         group_id=draw_input.group_id
     )
 
-@app.get("/classrooms/{classroom_id}/drawing-history", response_model=List[schemas.DrawingHistory])
+@app.get("/classrooms/{classroom_id}/drawing-history", response_model=List[schemas.DrawingHistory], tags=["Drawing"])
 def read_drawing_history(classroom_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     return crud.get_drawing_history_by_classroom(db, classroom_id=classroom_id)
 
-@app.post("/classrooms/{classroom_id}/confirm_draw", response_model=List[schemas.Student])
+@app.post("/classrooms/{classroom_id}/confirm_draw", response_model=List[schemas.Student], tags=["Drawing"])
 def confirm_draw(
     classroom_id: int,
     student_ids: schemas.StudentIDs,
@@ -222,12 +222,12 @@ def confirm_draw(
     return drawing_service.confirm_draw(db=db, classroom_id=classroom_id, student_ids=student_ids.student_ids)
 
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 def health_check():
     return {"status": "ok"}
 
 
-@app.get("/settings/{key}", response_model=schemas.Setting)
+@app.get("/settings/{key}", response_model=schemas.Setting, tags=["Settings"])
 def read_setting(key: str, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     db_setting = crud.get_setting(db, key=key)
     if db_setting is None:
@@ -235,6 +235,6 @@ def read_setting(key: str, db: Session = Depends(get_db), current_user: models.U
     return db_setting
 
 
-@app.put("/settings/", response_model=schemas.Setting)
+@app.put("/settings/", response_model=schemas.Setting, tags=["Settings"])
 def create_or_update_setting(setting: schemas.SettingCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_active_user)):
     return crud.create_or_update_setting(db=db, setting=setting)
