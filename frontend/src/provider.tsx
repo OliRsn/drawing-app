@@ -10,13 +10,16 @@ declare module "@react-types/shared" {
 }
 
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ForceLightTheme } from "@/components/ForceLightTheme";
 
 export function Provider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
-      <AuthProvider>{children}</AuthProvider>
+      <ForceLightTheme>
+        <AuthProvider>{children}</AuthProvider>
+      </ForceLightTheme>
     </HeroUIProvider>
   );
 }

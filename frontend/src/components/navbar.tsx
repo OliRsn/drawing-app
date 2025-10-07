@@ -7,7 +7,6 @@ import {
 } from "@heroui/navbar";
 import { Button } from "@heroui/button";
 import { siteConfig } from "@/config/site";
-import { ThemeSwitch } from "@/components/theme-switch";
 import { Logo } from "@/components/icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -50,9 +49,6 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarContent justify="end">
-        <NavbarItem>
-          <ThemeSwitch />
-        </NavbarItem>
         {isAuthenticated ? (
           <>
             {user?.is_admin && (
