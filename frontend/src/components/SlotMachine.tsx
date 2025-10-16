@@ -19,7 +19,13 @@ interface SlotMachineProps {
 }
 
 const REEL_ITEM_WIDTH = 150;
-const NUM_REPEATS = 20;
+const MIN_FULL_CYCLES = 3;
+const MIN_TOTAL_SPINS = 40;
+const BUFFER_MULTIPLIER = 2;
+const SPIN_DURATION_MS = 5000;
+const SLOW_SPIN_EASE: [number, number, number, number] = [0.15, 0.85, 0.25, 1];
+
+export const SLOT_MACHINE_SPIN_DURATION = SPIN_DURATION_MS;
 
 // Mulberry32 PRNG factory
 const mulberry32 = (seed: number) => {
@@ -60,27 +66,45 @@ export const SlotMachine = ({
     const seed = spinId + reelId * 1000 + (winner?.id || 0);
     const rng = mulberry32(seed);
 
-    let reelItems: Student[] = [];
-    for (let i = 0; i < NUM_REPEATS; i++) {
+    const ensureOdd = (value: number) => (value % 2 === 0 ? value + 1 : value);
+    const effectiveVisible = ensureOdd(Math.max(visibleItems, 3));
+
+    const itemsBeforeWinner = Math.max(
+      students.length * MIN_FULL_CYCLES,
+      effectiveVisible * (MIN_FULL_CYCLES + 1),
+      MIN_TOTAL_SPINS
+    );
+    const bufferAfterWinner = Math.max(effectiveVisible * BUFFER_MULTIPLIER, effectiveVisible + 3);
+    const totalItemsNeeded = itemsBeforeWinner + bufferAfterWinner;
+
+    const generated: Student[] = [];
+    while (generated.length < totalItemsNeeded) {
       const shuffled = shuffleWithRng(students, rng);
-      if (i > 0 && reelItems.length > 0 && reelItems[reelItems.length - 1].id === shuffled[0].id) {
+      if (generated.length > 0 && shuffled.length > 0 && generated[generated.length - 1].id === shuffled[0].id) {
         if (shuffled.length > 1) {
           shuffled.push(shuffled.shift()!);
         }
       }
-      reelItems = reelItems.concat(shuffled);
+      for (const student of shuffled) {
+        generated.push(student);
+        if (generated.length >= totalItemsNeeded) {
+          break;
+        }
+      }
     }
 
     if (winner) {
-      const winnerIndex = Math.floor(reelItems.length * 0.9);
-      // To avoid duplicates, remove all other instances of the winner from the reel
-      reelItems = reelItems.filter(s => s.id !== winner.id);
-      // And insert the winner at the target position
-      reelItems.splice(winnerIndex, 0, winner);
+      const insertionIndex = Math.min(
+        Math.max(itemsBeforeWinner - Math.ceil(effectiveVisible / 2), effectiveVisible),
+        generated.length
+      );
+      const filtered = generated.filter(student => student.id !== winner.id);
+      filtered.splice(insertionIndex, 0, winner);
+      return filtered;
     }
 
-    return reelItems;
-  }, [students, winner, spinId, reelId]);
+    return generated;
+  }, [students, winner, spinId, reelId, visibleItems]);
 
   const winnerIndex = useMemo(() => {
     if (!winner) return -1;
@@ -109,6 +133,23 @@ export const SlotMachine = ({
 
   const containerWidth = REEL_ITEM_WIDTH * visibleItems;
   const offset = (containerWidth - REEL_ITEM_WIDTH) / 2;
+  const targetPosition =
+    winnerIndex !== -1 ? -(winnerIndex * REEL_ITEM_WIDTH - offset) : 0;
+  const animation =
+    winnerIndex !== -1
+      ? { x: [0, targetPosition * 0.82, targetPosition] }
+      : { x: 0 };
+  const transition =
+    winnerIndex !== -1
+      ? {
+          duration: SPIN_DURATION_MS / 1000,
+          ease: ["linear", SLOW_SPIN_EASE],
+          times: [0, 0.75, 1] as const,
+        }
+      : {
+          duration: SPIN_DURATION_MS / 1000,
+          ease: SLOW_SPIN_EASE,
+        };
 
   return (
     <Card className="w-full group relative">
@@ -128,16 +169,10 @@ export const SlotMachine = ({
             <motion.div
               key={spinId} // restart animation when spinId changes
               initial={{ x: 0 }}
-              animate={{
-                x:
-                  winnerIndex !== -1
-                    ? -(winnerIndex * REEL_ITEM_WIDTH - offset)
-                    : 0,
-              }}
+              animate={animation}
               transition={{
-                duration: 5.0,
-                ease: "easeOut",
-                delay: animationDelay / 1000
+                ...transition,
+                delay: animationDelay / 1000,
               }}
               className="flex flex-row"
             >
