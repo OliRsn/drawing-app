@@ -1,3 +1,33 @@
 @import "tailwindcss";
 
-@config "../../tailwind.config.js"
+@theme {
+  --background: 254 254 254;
+  --foreground: 51 65 85;
+  --card: 255 255 255;
+  --card-foreground: 51 65 85;
+  --popover: 255 255 255;
+  --popover-foreground: 51 65 85;
+  --primary: 125 211 252;
+  --primary-foreground: 15 23 42;
+  --secondary: 221 214 254;
+  --secondary-foreground: 30 27 75;
+  --muted: 241 245 249;
+  --muted-foreground: 100 116 139;
+  --accent: 187 247 208;
+  --accent-foreground: 6 78 59;
+  --destructive: 253 164 175;
+  --destructive-foreground: 136 19 55;
+  --border: 100 116 139;
+  --input: transparent;
+  --input-background: 248 250 252;
+  --switch-background: 226 232 240;
+  --ring: 125 211 252;
+  --radius: 1rem;
+}
+
+@layer base {
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+  }
+}
