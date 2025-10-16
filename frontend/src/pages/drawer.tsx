@@ -280,33 +280,19 @@ export default function DrawerPage() {
           {isStudentSelectionOpen && (
             <CardBody>
               <div className="flex flex-wrap gap-2">
-                {[...(classroom?.students || [])]
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map(student => {
-                    const isSelected =
-                      selectedStudentIds.has(student.id) ||
-                      (!isCustomSelection && selectedStudentIds.size === 0);
-
-                    return (
-                      <Button
-                        key={student.id}
-                        variant="flat"
-                        color={isSelected ? "secondary" : "danger"}
-                        onPress={() => {
-                          const newIds = new Set(selectedStudentIds);
-                          if (newIds.has(student.id)) {
-                            newIds.delete(student.id);
-                          } else {
-                            newIds.add(student.id);
-                          }
-                          setSelectedStudentIds(newIds);
-                          setIsCustomSelection(newIds.size !== availableStudentCount);
-                        }}
-                      >
-                        {student.name}
-                      </Button>
-                    );
-                  })}
+                {[...(classroom?.students || [])].sort((a, b) => a.name.localeCompare(b.name)).map(student => (
+                  <Button
+                    key={student.id}
+                    variant={selectedStudentIds.has(student.id) ? "flat" : "flat"}
+                    color={selectedStudentIds.has(student.id) ? "secondary" : "danger"}
+                  onPress={() => {
+                    const newIds = new Set(selectedStudentIds);
+                    if (newIds.has(student.id)) newIds.delete(student.id); else newIds.add(student.id);
+                    setSelectedStudentIds(newIds);
+                    setIsCustomSelection(newIds.size !== availableStudentCount);
+                  }}
+                >{student.name}</Button>
+              ))}
               </div>
               {selectedStudentIds.size === 0 && (
                 <p className="text-danger text-sm mt-4">
