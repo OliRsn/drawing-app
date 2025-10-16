@@ -21,6 +21,18 @@ import { Student } from "@/types";
 const SLOT_DURATION = 5000; // ms, matches SlotMachine
 const STAGGER_DELAY = 1000; // ms
 
+const areSetsEqual = (a: Set<number>, b: Set<number>) => {
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const value of a) {
+    if (!b.has(value)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 export default function DrawerPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { classrooms, isLoading: classroomsLoading } = useClassrooms();
@@ -42,6 +54,8 @@ export default function DrawerPage() {
   const [isStudentSelectionOpen, setIsStudentSelectionOpen] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
+  const [isCustomSelection, setIsCustomSelection] = useState(false);
+  const hasActiveResults = useMemo(() => drawnStudents.some(student => student !== null), [drawnStudents]);
 
   useEffect(() => {
     if (!selectedClassroomId && classrooms.length > 0) {
@@ -52,6 +66,11 @@ export default function DrawerPage() {
   useEffect(() => {
     setSelectedGroupId(null);
   }, [selectedClassroomId]);
+
+  useEffect(() => {
+    setIsCustomSelection(false);
+    setSelectedStudentIds(new Set());
+  }, [selectedClassroomId, selectedGroupId]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -66,19 +85,71 @@ export default function DrawerPage() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (classroom?.students) {
-      const studentIds = new Set(classroom.students.map(s => s.id));
-      setSelectedStudentIds(studentIds);
-      setSlotMachineStudents(classroom.students);
-      setDrawnStudents(Array(numSlotMachines).fill(null));
-      setHasConfirmed(false);
-      setSpinId(0);
+    if (!classroom?.students) {
+      if (selectedStudentIds.size > 0) {
+        setSelectedStudentIds(new Set());
+      }
+      if (isCustomSelection) {
+        setIsCustomSelection(false);
+      }
+      return;
     }
-  }, [classroom?.students, numSlotMachines]);
+
+    const availableIds = new Set(classroom.students.map(student => student.id));
+
+    if (!isCustomSelection) {
+      if (!areSetsEqual(selectedStudentIds, availableIds)) {
+        setSelectedStudentIds(new Set(availableIds));
+      }
+      return;
+    }
+
+    if (selectedStudentIds.size === 0) {
+      return;
+    }
+
+    const filteredIds = new Set<number>();
+    selectedStudentIds.forEach(id => {
+      if (availableIds.has(id)) {
+        filteredIds.add(id);
+      }
+    });
+
+    if (filteredIds.size === 0) {
+      setSelectedStudentIds(new Set(availableIds));
+      setIsCustomSelection(false);
+      return;
+    }
+
+    const shouldBeCustom = filteredIds.size !== availableIds.size;
+    if (isCustomSelection !== shouldBeCustom) {
+      setIsCustomSelection(shouldBeCustom);
+    }
+
+    if (!areSetsEqual(selectedStudentIds, filteredIds)) {
+      setSelectedStudentIds(filteredIds);
+    }
+  }, [classroom?.students, selectedStudentIds, isCustomSelection]);
 
   useEffect(() => {
     setSelectedToValidate(Array(drawnStudents.length).fill(true));
   }, [drawnStudents]);
+
+  useEffect(() => {
+    if (!classroom?.students) {
+      setSlotMachineStudents([]);
+      return;
+    }
+    if (hasActiveResults) {
+      return;
+    }
+    if (selectedStudentIds.size === 0) {
+      setSlotMachineStudents(isCustomSelection ? [] : classroom.students);
+      return;
+    }
+    const selectedStudents = classroom.students.filter(student => selectedStudentIds.has(student.id));
+    setSlotMachineStudents(selectedStudents);
+  }, [classroom?.students, selectedStudentIds, isCustomSelection, hasActiveResults]);
 
   useEffect(() => {
     if (isDrawing) {
@@ -87,6 +158,12 @@ export default function DrawerPage() {
       return () => clearTimeout(timer);
     }
   }, [isDrawing, drawnStudents.length]);
+
+  useEffect(() => {
+    setDrawnStudents(Array(numSlotMachines).fill(null));
+    setHasConfirmed(false);
+    setSpinId(0);
+  }, [selectedClassroomId, selectedGroupId, numSlotMachines]);
 
   async function handleDraw() {
     if (!selectedClassroomId || !classroom) return;
@@ -158,6 +235,8 @@ export default function DrawerPage() {
     return sorted.map(student => ({ ...student, scaledValue: maxWeight > 0 ? (student.weight / maxWeight) * 100 : 0 }));
   }, [classroom?.students, sortBy, displayMode]);
 
+  const availableStudentCount = classroom?.students?.length ?? 0;
+
   if (authLoading || classroomsLoading) {
     return <DefaultLayout><div className="flex justify-center items-center h-full"><Spinner size="lg" /></div></DefaultLayout>;
   }
@@ -206,13 +285,14 @@ export default function DrawerPage() {
                     key={student.id}
                     variant={selectedStudentIds.has(student.id) ? "flat" : "flat"}
                     color={selectedStudentIds.has(student.id) ? "secondary" : "danger"}
-                    onPress={() => {
-                      const newIds = new Set(selectedStudentIds);
-                      if (newIds.has(student.id)) newIds.delete(student.id); else newIds.add(student.id);
-                      setSelectedStudentIds(newIds);
-                    }}
-                  >{student.name}</Button>
-                ))}
+                  onPress={() => {
+                    const newIds = new Set(selectedStudentIds);
+                    if (newIds.has(student.id)) newIds.delete(student.id); else newIds.add(student.id);
+                    setSelectedStudentIds(newIds);
+                    setIsCustomSelection(newIds.size !== availableStudentCount);
+                  }}
+                >{student.name}</Button>
+              ))}
               </div>
               {selectedStudentIds.size === 0 && (
                 <p className="text-danger text-sm mt-4">
