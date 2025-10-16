@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Slot Machine Animation:** Streamlined reel generation to avoid multiplying the student list and tuned easing so each spin decelerates smoothly toward the selected winner, improving performance without sacrificing suspense.
+- **Student Selection UI:** Default selections now stay highlighted when switching classes or groups, eliminating the red flash and keeping the default state visually consistent.
 
 ## [1.3.2] - 2025-10-07
 

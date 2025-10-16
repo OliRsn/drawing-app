@@ -52,10 +52,29 @@ export default function DrawerPage() {
   const [numSlotMachines, setNumSlotMachines] = useState(3);
   const [selectedToValidate, setSelectedToValidate] = useState<boolean[]>([]);
   const [isStudentSelectionOpen, setIsStudentSelectionOpen] = useState(false);
-  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number> | null>(null);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
-  const [isCustomSelection, setIsCustomSelection] = useState(false);
   const hasActiveResults = useMemo(() => drawnStudents.some(student => student !== null), [drawnStudents]);
+  const availableStudentCount = classroom?.students?.length ?? 0;
+  const resolvedSelectedStudents = useMemo(() => {
+    if (!classroom?.students) return [];
+    if (selectedStudentIds === null) {
+      return classroom.students;
+    }
+    const availableIds = new Set(classroom.students.map(student => student.id));
+    const validIds = new Set<number>();
+    selectedStudentIds.forEach(id => {
+      if (availableIds.has(id)) {
+        validIds.add(id);
+      }
+    });
+    return classroom.students.filter(student => validIds.has(student.id));
+  }, [classroom?.students, selectedStudentIds]);
+  const hasSelection = resolvedSelectedStudents.length > 0;
+  const isDefaultSelection = selectedStudentIds === null;
+  const resetSelectionState = () => {
+    setSelectedStudentIds(null);
+  };
 
   useEffect(() => {
     if (!selectedClassroomId && classrooms.length > 0) {
@@ -65,12 +84,12 @@ export default function DrawerPage() {
 
   useEffect(() => {
     setSelectedGroupId(null);
+    resetSelectionState();
   }, [selectedClassroomId]);
 
   useEffect(() => {
-    setIsCustomSelection(false);
-    setSelectedStudentIds(new Set());
-  }, [selectedClassroomId, selectedGroupId]);
+    resetSelectionState();
+  }, [selectedGroupId]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -86,28 +105,17 @@ export default function DrawerPage() {
 
   useEffect(() => {
     if (!classroom?.students) {
-      if (selectedStudentIds.size > 0) {
-        setSelectedStudentIds(new Set());
+      if (selectedStudentIds !== null) {
+        setSelectedStudentIds(null);
       }
-      if (isCustomSelection) {
-        setIsCustomSelection(false);
-      }
+      return;
+    }
+
+    if (selectedStudentIds === null) {
       return;
     }
 
     const availableIds = new Set(classroom.students.map(student => student.id));
-
-    if (!isCustomSelection) {
-      if (!areSetsEqual(selectedStudentIds, availableIds)) {
-        setSelectedStudentIds(new Set(availableIds));
-      }
-      return;
-    }
-
-    if (selectedStudentIds.size === 0) {
-      return;
-    }
-
     const filteredIds = new Set<number>();
     selectedStudentIds.forEach(id => {
       if (availableIds.has(id)) {
@@ -116,20 +124,14 @@ export default function DrawerPage() {
     });
 
     if (filteredIds.size === 0) {
-      setSelectedStudentIds(new Set(availableIds));
-      setIsCustomSelection(false);
+      setSelectedStudentIds(null);
       return;
-    }
-
-    const shouldBeCustom = filteredIds.size !== availableIds.size;
-    if (isCustomSelection !== shouldBeCustom) {
-      setIsCustomSelection(shouldBeCustom);
     }
 
     if (!areSetsEqual(selectedStudentIds, filteredIds)) {
       setSelectedStudentIds(filteredIds);
     }
-  }, [classroom?.students, selectedStudentIds, isCustomSelection]);
+  }, [classroom?.students, selectedStudentIds]);
 
   useEffect(() => {
     setSelectedToValidate(Array(drawnStudents.length).fill(true));
@@ -143,13 +145,9 @@ export default function DrawerPage() {
     if (hasActiveResults) {
       return;
     }
-    if (selectedStudentIds.size === 0) {
-      setSlotMachineStudents(isCustomSelection ? [] : classroom.students);
-      return;
-    }
-    const selectedStudents = classroom.students.filter(student => selectedStudentIds.has(student.id));
-    setSlotMachineStudents(selectedStudents);
-  }, [classroom?.students, selectedStudentIds, isCustomSelection, hasActiveResults]);
+
+    setSlotMachineStudents(resolvedSelectedStudents);
+  }, [classroom?.students, resolvedSelectedStudents, hasActiveResults]);
 
   useEffect(() => {
     if (isDrawing) {
@@ -167,9 +165,7 @@ export default function DrawerPage() {
 
   async function handleDraw() {
     if (!selectedClassroomId || !classroom) return;
-    const eligibleStudents = classroom.students.filter((student) =>
-      selectedStudentIds.has(student.id)
-    );
+    const eligibleStudents = resolvedSelectedStudents;
 
     if (eligibleStudents.length === 0) {
       setSlotMachineStudents([]);
@@ -235,7 +231,6 @@ export default function DrawerPage() {
     return sorted.map(student => ({ ...student, scaledValue: maxWeight > 0 ? (student.weight / maxWeight) * 100 : 0 }));
   }, [classroom?.students, sortBy, displayMode]);
 
-  const availableStudentCount = classroom?.students?.length ?? 0;
 
   if (authLoading || classroomsLoading) {
     return <DefaultLayout><div className="flex justify-center items-center h-full"><Spinner size="lg" /></div></DefaultLayout>;
@@ -253,7 +248,11 @@ export default function DrawerPage() {
           <Select
             label="Sélectionner une classe"
             selectedKeys={selectedClassroomId ? [selectedClassroomId.toString()] : []}
-            onSelectionChange={(keys: any) => setSelectedClassroomId(Number(Array.from(keys)[0]))}
+            onSelectionChange={(keys: any) => {
+              const value = Number(Array.from(keys)[0]);
+              resetSelectionState();
+              setSelectedClassroomId(value);
+            }}
           >
             {classrooms.map(c => <SelectItem key={c.id}>{c.name}</SelectItem>)}
           </Select>
@@ -263,6 +262,7 @@ export default function DrawerPage() {
               selectedKeys={selectedGroupId ? [selectedGroupId.toString()] : ['all']}
               onSelectionChange={(keys: any) => {
                 const key = Array.from(keys)[0];
+                resetSelectionState();
                 setSelectedGroupId(key === 'all' ? null : Number(key));
               }}
               items={[{id: 'all', name: 'Tous les élèves'}, ...classroom.groups]}
@@ -280,21 +280,37 @@ export default function DrawerPage() {
           {isStudentSelectionOpen && (
             <CardBody>
               <div className="flex flex-wrap gap-2">
-                {[...(classroom?.students || [])].sort((a, b) => a.name.localeCompare(b.name)).map(student => (
-                  <Button
-                    key={student.id}
-                    variant={selectedStudentIds.has(student.id) ? "flat" : "flat"}
-                    color={selectedStudentIds.has(student.id) ? "secondary" : "danger"}
-                  onPress={() => {
-                    const newIds = new Set(selectedStudentIds);
-                    if (newIds.has(student.id)) newIds.delete(student.id); else newIds.add(student.id);
-                    setSelectedStudentIds(newIds);
-                    setIsCustomSelection(newIds.size !== availableStudentCount);
-                  }}
-                >{student.name}</Button>
-              ))}
+                {[...(classroom?.students || [])]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map(student => {
+                    const isSelected = isDefaultSelection || (selectedStudentIds?.has(student.id) ?? false);
+
+                    return (
+                      <Button
+                        key={student.id}
+                        variant="flat"
+                        color={isSelected ? "secondary" : "danger"}
+                        onPress={() => {
+                          const baseIds =
+                            selectedStudentIds ??
+                            new Set((classroom?.students || []).map(s => s.id));
+                          const newIds = new Set(baseIds);
+                          if (newIds.has(student.id)) {
+                            newIds.delete(student.id);
+                          } else {
+                            newIds.add(student.id);
+                          }
+                          setSelectedStudentIds(
+                            newIds.size === availableStudentCount ? null : newIds
+                          );
+                        }}
+                      >
+                        {student.name}
+                      </Button>
+                    );
+                  })}
               </div>
-              {selectedStudentIds.size === 0 && (
+              {!hasSelection && (
                 <p className="text-danger text-sm mt-4">
                   Sélectionnez au moins un élève pour lancer le tirage.
                 </p>
@@ -314,7 +330,7 @@ export default function DrawerPage() {
               <Button
                 color="primary"
                 onPress={handleDraw}
-                disabled={isDrawing || selectedStudentIds.size === 0}
+                disabled={isDrawing || !hasSelection}
               >
                 Lancer le tirage
               </Button>
