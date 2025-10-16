@@ -1,6 +1,4 @@
-
-
-
+import {heroui} from "@heroui/theme"
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -11,7 +9,8 @@ export default {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
-
-
-  plugins: [],
+  theme: {
+    extend: {},
+  },
+  plugins: [heroui()],
 }
