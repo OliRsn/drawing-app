@@ -11,14 +11,14 @@ import { useAuth } from "@/contexts/AuthContext";
 
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
-import { SlotMachine } from "@/components/SlotMachine";
+import { SlotMachine, SLOT_MACHINE_SPIN_DURATION } from "@/components/SlotMachine";
 import { DrawingHistory } from "@/components/DrawingHistory";
 import { StudentCard } from "@/components/StudentCard";
 import { useClassrooms } from "@/hooks/useClassrooms";
 import { useClassroom } from "@/hooks/useClassroom";
 import { Student } from "@/types";
 
-const SLOT_DURATION = 5000; // ms, matches SlotMachine
+const SLOT_DURATION = SLOT_MACHINE_SPIN_DURATION; // ms, matches SlotMachine
 const STAGGER_DELAY = 1000; // ms
 
 const areSetsEqual = (a: Set<number>, b: Set<number>) => {
