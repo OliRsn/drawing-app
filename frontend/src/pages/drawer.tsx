@@ -90,12 +90,23 @@ export default function DrawerPage() {
 
   async function handleDraw() {
     if (!selectedClassroomId || !classroom) return;
+    const eligibleStudents = classroom.students.filter((student) =>
+      selectedStudentIds.has(student.id)
+    );
+
+    if (eligibleStudents.length === 0) {
+      setSlotMachineStudents([]);
+      setDrawnStudents(Array(numSlotMachines).fill(null));
+      setIsStudentSelectionOpen(true);
+      return;
+    }
+
     setHasConfirmed(false);
-    setSlotMachineStudents(classroom.students.filter(s => selectedStudentIds.has(s.id)));
+    setSlotMachineStudents(eligibleStudents);
     try {
       const response = await api.post(`/classrooms/${selectedClassroomId}/draw`, {
         num_students: drawnStudents.length,
-        student_ids: Array.from(selectedStudentIds),
+        student_ids: eligibleStudents.map((student) => student.id),
         group_id: selectedGroupId,
       });
       setDrawnStudents(response.data);
@@ -203,6 +214,11 @@ export default function DrawerPage() {
                   >{student.name}</Button>
                 ))}
               </div>
+              {selectedStudentIds.size === 0 && (
+                <p className="text-danger text-sm mt-4">
+                  Sélectionnez au moins un élève pour lancer le tirage.
+                </p>
+              )}
             </CardBody>
           )}
         </Card>
@@ -215,7 +231,13 @@ export default function DrawerPage() {
                 <Button color="primary" onPress={addSlotMachine} disabled={isDrawing}><PlusIcon className="w-4 h-4" /></Button>
                 <Button color="danger" onPress={removeSlotMachine} disabled={isDrawing || drawnStudents.length <= 1}><MinusIcon className="w-4 h-4" /></Button>
               </ButtonGroup>
-              <Button color="primary" onPress={handleDraw} disabled={isDrawing}>Lancer le tirage</Button>
+              <Button
+                color="primary"
+                onPress={handleDraw}
+                disabled={isDrawing || selectedStudentIds.size === 0}
+              >
+                Lancer le tirage
+              </Button>
             </div>
           </CardHeader>
           <CardBody className="flex flex-col gap-4">
